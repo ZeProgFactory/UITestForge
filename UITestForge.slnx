@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+    <File Path="x.bat" />
+  </Folder>
+  <Project Path="UITestForge/UITestForge.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>
