@@ -481,6 +481,74 @@ namespace UITestForge
          TreeItems.Clear();
          SelectedTreeNode = null;
       }
+
+      // ── Script Editor ─────────────────────────────────────────────────────────
+
+      private void OnInsertSnippet(object? sender, EventArgs e)
+      {
+         if (sender is not Button btn) return;
+         var snippet = btn.CommandParameter as string ?? string.Empty;
+         var current = ScriptEditor.Text ?? string.Empty;
+         ScriptEditor.Text = current.Length > 0 && !current.EndsWith('\n')
+            ? current + "\n" + snippet
+            : current + snippet;
+      }
+
+      private void OnScriptClearClicked(object? sender, EventArgs e)
+      {
+         ScriptEditor.Text = string.Empty;
+         ScriptOutputLabel.Text = "(output will appear here)";
+         ScriptStatusLabel.Text = "Ready";
+      }
+
+      private async void OnScriptRunClicked(object? sender, EventArgs e)
+      {
+#if ANDROID
+         ScriptStatusLabel.Text = "Script execution requires running UITestForge on Windows.";
+         return;
+#else
+         if (_selectedAgent is null)
+         {
+            ScriptStatusLabel.Text = "Select an agent first.";
+            return;
+         }
+
+         ScriptRunBtn.IsEnabled = false;
+         ScriptClearBtn.IsEnabled = false;
+         SetBusy(true, "Running script…");
+
+         try
+         {
+            var (stepCount, error) = await ScriptEditorHelper.RunScriptAsync(
+               ScriptEditor.Text ?? string.Empty,
+               _selectedAgent,
+               onStepStatus: (n, cmd) => ScriptStatusLabel.Text = $"Step {n}: {cmd}…",
+               onOutputUpdate: AppendOutput,
+               onScreenshotCaptured: path =>
+               {
+                  ScreenshotImage.Source = ImageSource.FromFile(path);
+                  ScreenshotImage.IsVisible = true;
+                  _lastScreenshotPath = path;
+               });
+
+            ScriptStatusLabel.Text = error is not null
+               ? $"Script error: {error.Message}"
+               : stepCount == 0 ? "No commands found." : $"Done — {stepCount} step(s) executed.";
+         }
+         finally
+         {
+            SetBusy(false);
+            ScriptRunBtn.IsEnabled = true;
+            ScriptClearBtn.IsEnabled = true;
+         }
+#endif
+      }
+
+      private void AppendOutput(string text)
+      {
+         ScriptOutputLabel.Text = text;
+         _ = ScriptOutputScroll.ScrollToAsync(0, ScriptOutputLabel.Height, false);
+      }
    }
 }
 

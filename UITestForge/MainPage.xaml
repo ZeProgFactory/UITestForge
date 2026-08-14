@@ -98,7 +98,7 @@
                  ToolTipProperties.Text="Run adb reverse tcp:19223 tcp:19223 on emulator-5554 so the Android DevFlow agent can reach the broker" />
          <Label x:Name="ActionStatusLabel"
                 Grid.Column="4"
-                Text="Select an agent below"
+                Text="Select an agent above"
                 VerticalOptions="Center"
                 FontSize="12"
                 TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
@@ -116,15 +116,18 @@
       <!-- Row 2: 3-column panel — agents | screenshot | tree -->
       <Grid Grid.Row="2" ColumnDefinitions="*,*,*" Margin="10,0,0,10">
 
-         <!-- Col 1: Screenshot image -->
-         <Image x:Name="ScreenshotImage"
-                Grid.Column="0"
+         <!-- Col 0: Screenshot image -->
+         <Border Grid.Column="0" BackgroundColor="Silver" Padding="5">
+            
+            <Image x:Name="ScreenshotImage"
                 IsVisible="False"
                 Aspect="AspectFit"
                 HorizontalOptions="Fill"
                 VerticalOptions="Fill" />
 
-         <!-- Col 2: Hierarchical tree view -->
+         </Border>
+
+         <!-- Col 1: Hierarchical tree view -->
          <Grid x:Name="TreeColumn"
                Grid.Column="1"
                RowDefinitions="*,Auto"
@@ -232,6 +235,117 @@
 
          </Grid>
 
+         <!-- Col 2: Script editor -->
+         <Border x:Name="scriptEditor" Grid.Column="2" BackgroundColor="Silver" Padding="5">
+
+            <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="4">
+
+               <!-- Header -->
+               <Label Grid.Row="0"
+                      Text="📝 Script Editor"
+                      FontAttributes="Bold"
+                      FontSize="14"
+                      Margin="0,0,0,2" />
+
+               <!-- Snippet insert buttons -->
+               <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                  <HorizontalStackLayout Spacing="4">
+                     <Button Text="tap"
+                             FontSize="11"
+                             Padding="6,3"
+                             CommandParameter="tap MyElement"
+                             Clicked="OnInsertSnippet" />
+                     <Button Text="fill"
+                             FontSize="11"
+                             Padding="6,3"
+                             CommandParameter="fill MyElement Hello"
+                             Clicked="OnInsertSnippet" />
+                     <Button Text="clear"
+                             FontSize="11"
+                             Padding="6,3"
+                             CommandParameter="clear MyElement"
+                             Clicked="OnInsertSnippet" />
+                     <Button Text="focus"
+                             FontSize="11"
+                             Padding="6,3"
+                             CommandParameter="focus MyElement"
+                             Clicked="OnInsertSnippet" />
+                     <Button Text="screenshot"
+                             FontSize="11"
+                             Padding="6,3"
+                             CommandParameter="screenshot"
+                             Clicked="OnInsertSnippet" />
+                     <Button Text="# comment"
+                             FontSize="11"
+                             Padding="6,3"
+                             CommandParameter="# "
+                             Clicked="OnInsertSnippet" />
+                  </HorizontalStackLayout>
+               </ScrollView>
+
+               <!-- Script text editor -->
+               <Border Grid.Row="2"
+                       BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                       StrokeThickness="1"
+                       Stroke="{AppThemeBinding Light=LightGray, Dark=#444}">
+                  <Border.StrokeShape>
+                     <RoundRectangle CornerRadius="4" />
+                  </Border.StrokeShape>
+                  <Editor x:Name="ScriptEditor"
+                          FontFamily="Courier New"
+                          FontSize="13"
+                          Placeholder="# Write your devflow script here&#x0a;# Commands: tap, fill, clear, focus, screenshot&#x0a;tap MyButton"
+                          AutoSize="TextChanges"
+                          VerticalOptions="Fill"
+                          Margin="4" />
+               </Border>
+
+               <!-- Run / Clear buttons -->
+               <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,2,0,0">
+                  <Label x:Name="ScriptStatusLabel"
+                         Grid.Column="0"
+                         Text="Ready"
+                         VerticalOptions="Center"
+                         FontSize="12"
+                         TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                         LineBreakMode="TailTruncation" />
+                  <Button x:Name="ScriptClearBtn"
+                          Grid.Column="1"
+                          Text="🗑 Clear"
+                          FontSize="12"
+                          Padding="8,4"
+                          Clicked="OnScriptClearClicked" />
+                  <Button x:Name="ScriptRunBtn"
+                          Grid.Column="2"
+                          Text="▶ Run"
+                          FontSize="12"
+                          Padding="8,4"
+                          Clicked="OnScriptRunClicked" />
+               </Grid>
+
+               <!-- Output log -->
+               <Border Grid.Row="4"
+                       HeightRequest="130"
+                       BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#111}"
+                       StrokeThickness="1"
+                       Stroke="{AppThemeBinding Light=LightGray, Dark=#444}">
+                  <Border.StrokeShape>
+                     <RoundRectangle CornerRadius="4" />
+                  </Border.StrokeShape>
+                  <ScrollView x:Name="ScriptOutputScroll" Orientation="Vertical">
+                     <Label x:Name="ScriptOutputLabel"
+                            FontFamily="Courier New"
+                            FontSize="11"
+                            LineBreakMode="CharacterWrap"
+                            VerticalOptions="Start"
+                            Margin="6,4"
+                            Text="(output will appear here)" />
+                  </ScrollView>
+               </Border>
+
+            </Grid>
+
+         </Border>
       </Grid>
 
    </Grid>
