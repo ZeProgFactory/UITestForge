@@ -6,6 +6,49 @@ internal static class DevFlowCliHelper
 {
 #if !ANDROID
    /// <summary>
+   /// Ensures the DevFlow broker is running. If it is not reachable, launches
+   /// <c>maui devflow broker start</c> and waits up to <paramref name="startupTimeoutMs"/> ms
+   /// for it to become available.
+   /// </summary>
+   public static async Task EnsureBrokerStartedAsync(int startupTimeoutMs = 5_000)
+   {
+      using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+      try
+      {
+         var resp = await http.GetAsync(
+            $"http://localhost:{DevFlowBrokerClient.BrokerPort}/api/agents");
+         if (resp.IsSuccessStatusCode)
+            return; // broker already running
+      }
+      catch { }
+
+      // Broker not reachable – start it.
+      var psi = new ProcessStartInfo("maui", "devflow broker start")
+      {
+         UseShellExecute = false,
+         RedirectStandardOutput = true,
+         RedirectStandardError = true,
+         CreateNoWindow = true,
+      };
+      Process.Start(psi); // fire-and-forget; broker runs as a background daemon
+
+      // Wait until the broker responds or the timeout elapses.
+      var deadline = DateTime.UtcNow.AddMilliseconds(startupTimeoutMs);
+      while (DateTime.UtcNow < deadline)
+      {
+         await Task.Delay(500);
+         try
+         {
+            var resp = await http.GetAsync(
+               $"http://localhost:{DevFlowBrokerClient.BrokerPort}/api/agents");
+            if (resp.IsSuccessStatusCode)
+               return;
+         }
+         catch { }
+      }
+   }
+
+   /// <summary>
    /// Runs a <c>maui devflow</c> sub-command targeting the given agent's port
    /// and returns (exitCode, stdout, stderr).
    /// Only available on platforms where the <c>maui</c> CLI is installed (Windows).

@@ -57,7 +57,8 @@
                          Grid.Row="2"
                          FontSize="12"
                          TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-               <Label x:Name="SelectedAgentConnectedAt"
+                             
+               <Label x:Name="SelectedAgentConnectedAt" IsVisible="False"
                          Grid.Row="3"
                          FontSize="11"
                          TextColor="{AppThemeBinding Light=DarkGray, Dark=Silver}" />
@@ -301,7 +302,7 @@
                </Border>
 
                <!-- Run / Clear buttons -->
-               <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,2,0,0">
+               <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,2,0,0">
                   <Label x:Name="ScriptStatusLabel"
                          Grid.Column="0"
                          Text="Ready"

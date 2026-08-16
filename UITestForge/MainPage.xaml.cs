@@ -71,6 +71,9 @@ namespace UITestForge
       /// </summary>
       private async Task MonitorDevFlowApp(CancellationToken ct)
       {
+#if !ANDROID
+         await DevFlowCliHelper.EnsureBrokerStartedAsync();
+#endif
          while (!ct.IsCancellationRequested)
          {
             try
@@ -537,6 +540,14 @@ namespace UITestForge
          }
          finally
          {
+            //PptxReportHelper.AddPage(
+            //    pptxPath: "report.pptx",
+            //    beforeImagePath: "before.png",
+            //    afterImagePath: "after.png",
+            //    executionLogs: "Step 1 passed\nStep 2 passed",
+            //    scriptText: "Full test script here…",
+            //    title: "Test Case 42 – Login Flow");
+
             SetBusy(false);
             ScriptRunBtn.IsEnabled = true;
             ScriptClearBtn.IsEnabled = true;
