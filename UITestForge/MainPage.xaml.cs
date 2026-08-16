@@ -85,6 +85,7 @@ namespace UITestForge
                   var previousSelectedId = _selectedAgent?.Id;
                   var incoming = agents ?? [];
                   var selectionLost = false;
+                  var collectionChanged = false;
 
                   _isRefreshing = true;
                   try
@@ -93,7 +94,10 @@ namespace UITestForge
                      for (int i = Agents.Count - 1; i >= 0; i--)
                      {
                         if (!incoming.Any(a => a.Id == Agents[i].Id))
+                        {
                            Agents.RemoveAt(i);
+                           collectionChanged = true;
+                        }
                      }
 
                      // Update existing agents and append new ones
@@ -115,6 +119,7 @@ namespace UITestForge
                         else
                         {
                            Agents.Insert(i, fresh);
+                           collectionChanged = true;
                            if (fresh.Id == previousSelectedId)
                               selectionLost = true;
                         }
@@ -125,15 +130,25 @@ namespace UITestForge
                      _isRefreshing = false;
                   }
 
+                  // MAUI's Picker doesn't always sync its dropdown list when the bound
+                  // ObservableCollection is mutated; resetting ItemsSource forces a rebuild.
+                  if (collectionChanged)
+                  {
+                     AgentsPicker.ItemsSource = null;
+                     AgentsPicker.ItemsSource = Agents;
+                  }
+
                   StatusLabel.Text = Agents.Count > 0
                      ? $"Last refresh: {DateTime.Now:HH:mm:ss}  —  {Agents.Count} agent(s)"
                      : $"Last refresh: {DateTime.Now:HH:mm:ss}  —  No agents connected";
 
-                  // Check if the CollectionView silently dropped selection during mutations
-                  if (previousSelectedId is not null && AgentsPicker.SelectedItem is null)
+                  // After an ItemsSource reset the Picker always clears its selection;
+                  // also catch cases where the collection mutations silently dropped it.
+                  if (previousSelectedId is not null &&
+                      (collectionChanged || AgentsPicker.SelectedItem is null))
                      selectionLost = true;
 
-                  // Only restore selection when the item instance was actually replaced
+                  // Restore selection when the item instance was replaced or lost
                   if (selectionLost)
                   {
                      var restored = Agents.FirstOrDefault(a => a.Id == previousSelectedId);
