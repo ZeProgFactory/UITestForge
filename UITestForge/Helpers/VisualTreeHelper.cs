@@ -12,13 +12,20 @@ internal static class VisualTreeHelper
       TreeNode node, int depth, int expandDepth,
       ObservableCollection<TreeNodeItem> items)
    {
-      var item = new TreeNodeItem { Node = node, Depth = depth };
-      if (depth < expandDepth && node.Children?.Count > 0)
-         item.IsExpanded = true;
-      items.Add(item);
-      if (item.IsExpanded && node.Children is not null)
-         foreach (var child in node.Children)
-            FlattenTree(child, depth + 1, expandDepth, items);
+      try
+      {
+         var item = new TreeNodeItem { Node = node, Depth = depth };
+         if (depth < expandDepth && node.Children?.Count > 0)
+            item.IsExpanded = true;
+         items.Add(item);
+         if (item.IsExpanded && node.Children is not null)
+            foreach (var child in node.Children)
+               FlattenTree(child, depth + 1, expandDepth, items);
+      }
+      catch (Exception ex)
+      {
+         System.Diagnostics.Debug.WriteLine($"Error flattening tree node {node?.Type ?? "null"}: {ex.Message}");
+      }
    }
 
    /// <summary>Inserts the immediate children of <paramref name="item"/> into the flat list.</summary>
@@ -30,8 +37,15 @@ internal static class VisualTreeHelper
       int insertAt = idx + 1;
       foreach (var child in item.Node.Children)
       {
-         var childItem = new TreeNodeItem { Node = child, Depth = item.Depth + 1 };
-         items.Insert(insertAt++, childItem);
+         try
+         {
+            var childItem = new TreeNodeItem { Node = child, Depth = item.Depth + 1 };
+            items.Insert(insertAt++, childItem);
+         }
+         catch (Exception ex)
+         {
+            System.Diagnostics.Debug.WriteLine($"Error expanding node {child?.Type ?? "null"}: {ex.Message}");
+         }
       }
    }
 

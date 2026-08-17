@@ -24,6 +24,8 @@ builder.AddMauiDevFlowAgent();
 
 
 dotnet tool install -g Microsoft.Maui.Cli --prerelease
+reboot
+
 dotnet tool uninstall Microsoft.Maui.Cli --global
 
 maui devflow broker start

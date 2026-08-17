@@ -25,28 +25,56 @@ public class TreeNodeItem : INotifyPropertyChanged
 
    public string ExpandIcon => HasChildren ? (_isExpanded ? "▾" : "▸") : " ";
 
-   public string TypeIcon => Node.Type switch
+   public string TypeIcon => GetTypeIcon(Node.Type);
+
+   private static string GetTypeIcon(string type)
    {
-      "Button" => "🔘",
-      "Label" => "🏷",
-      "Image" => "🖼",
-      "Entry" => "✏",
-      "Editor" => "📝",
-      "ScrollView" => "📜",
-      "ContentPage" => "📄",
-      "Window" => "🪟",
-      "Grid" => "⊞",
-      "VerticalStackLayout" or "HorizontalStackLayout"
-         or "StackLayout" => "⊟",
-      "AppShell" or "Shell" => "🐚",
-      "Frame" or "Border" => "▭",
-      "ActivityIndicator" => "⏳",
-      "Switch" => "↕",
-      "CollectionView" or "ListView" => "📋",
-      "ShellItem" or "ShellSection" or "ShellContent"
-         or "FlyoutButton" => "🗂",
-      _ => "▫"
-   };
+      // Try exact match first
+      var icon = type switch
+      {
+         "Button" => "🔘",
+         "Label" => "🏷",
+         "Image" => "🖼",
+         "Entry" => "✏",
+         "Editor" => "📝",
+         "ScrollView" => "📜",
+         "ContentPage" => "📄",
+         "Window" => "🪟",
+         "Grid" => "⊞",
+         "VerticalStackLayout" or "HorizontalStackLayout"
+            or "StackLayout" => "⊟",
+         "AppShell" or "Shell" => "🐚",
+         "Frame" or "Border" => "▭",
+         "ActivityIndicator" => "⏳",
+         "Switch" => "↕",
+         "CollectionView" or "ListView" => "📋",
+         "ShellItem" or "ShellSection" or "ShellContent"
+            or "FlyoutButton" => "🗂",
+         "Picker" => "🎚",
+         _ => null
+      };
+
+      if (icon != null) return icon;
+
+      // Try to extract base type from custom controls (e.g., CustomPicker -> Picker)
+      string[] knownTypes = [
+         "Button", "Label", "Image", "Entry", "Editor", "ScrollView",
+         "ContentPage", "Window", "Grid", "StackLayout", "Shell",
+         "Frame", "Border", "ActivityIndicator", "Switch",
+         "CollectionView", "ListView", "Picker"
+      ];
+
+      foreach (var knownType in knownTypes)
+      {
+         if (type.Contains(knownType, StringComparison.OrdinalIgnoreCase))
+         {
+            return GetTypeIcon(knownType);
+         }
+      }
+
+      // Unknown type
+      return "▫";
+   }
 
    public string DisplayType => Node.Type;
 

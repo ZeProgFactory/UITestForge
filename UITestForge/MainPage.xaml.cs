@@ -387,11 +387,69 @@ namespace UITestForge
                SelectedTreeNode = null;
                if (roots is { Count: > 0 })
                {
+                  // Diagnostic: Count all node types in the full tree
+                  var allTypes = new Dictionary<string, int>();
+                  var allNodesFlat = new List<(TreeNode node, int depth)>();
+
+                  void CollectNodes(TreeNode node, int depth)
+                  {
+                     if (!allTypes.ContainsKey(node.Type))
+                        allTypes[node.Type] = 0;
+                     allTypes[node.Type]++;
+                     allNodesFlat.Add((node, depth));
+
+                     if (node.Children != null)
+                        foreach (var child in node.Children)
+                           CollectNodes(child, depth + 1);
+                  }
+
+                  foreach (var root in roots)
+                     CollectNodes(root, 0);
+
+                  var customPickerCount = allTypes.GetValueOrDefault("CustomPicker", 0);
+                  var customEntryCount = allTypes.GetValueOrDefault("CustomEntry", 0);
+
+                  // Find the depth of CustomPicker and CustomEntry nodes
+                  var customPickerDepths = allNodesFlat
+                     .Where(n => n.node.Type == "CustomPicker")
+                     .Select(n => n.depth)
+                     .ToList();
+                  var customEntryDepths = allNodesFlat
+                     .Where(n => n.node.Type == "CustomEntry")
+                     .Select(n => n.depth)
+                     .ToList();
+
+                  // Now flatten the tree for display (only expands to depth 1)
                   foreach (var root in roots)
                      FlattenTree(root, 0, expandDepth: 1);
+
+                  var diagnosticInfo = "";
+
+                  // Auto-expand all nodes if CustomPicker or CustomEntry are found but not visible
+                  if ((customPickerCount > 0 || customEntryCount > 0) &&
+                      !TreeItems.Any(item => item.Node.Type == "CustomPicker" || item.Node.Type == "CustomEntry"))
+                  {
+                     var beforeCount = TreeItems.Count;
+                     // They exist but are hidden in collapsed nodes - expand everything
+                     ExpandAllNodes();
+                     diagnosticInfo += $" [Auto-expanded: {beforeCount} → {TreeItems.Count} nodes]";
+                  }
+
+                  if (customPickerCount > 0)
+                     diagnosticInfo += $" CustomPicker: {customPickerCount} at depth {string.Join(",", customPickerDepths)};";
+                  if (customEntryCount > 0)
+                     diagnosticInfo += $" CustomEntry: {customEntryCount} at depth {string.Join(",", customEntryDepths)};";
+
+                  if (string.IsNullOrEmpty(diagnosticInfo))
+                     diagnosticInfo = " (no CustomPicker/CustomEntry found)";
+
+                  ActionStatusLabel.Text = $"Tree loaded — {TreeItems.Count} visible.{diagnosticInfo}";
+               }
+               else
+               {
+                  ActionStatusLabel.Text = "Tree loaded — 0 nodes";
                }
                TreeColumn.IsVisible = true;
-               ActionStatusLabel.Text = $"Tree loaded — {TreeItems.Count} nodes";
             }
             else
             {
@@ -508,6 +566,20 @@ namespace UITestForge
          if (e.Parameter is not TreeNodeItem item || !item.HasChildren) return;
          if (item.IsExpanded) CollapseNode(item);
          else ExpandNode(item);
+      }
+
+      /// <summary>Expands all collapsed nodes recursively to make all controls visible.</summary>
+      private void ExpandAllNodes()
+      {
+         // Keep expanding until no more nodes can be expanded
+         int previousCount;
+         do
+         {
+            previousCount = TreeItems.Count;
+            var nodesToExpand = TreeItems.Where(item => item.HasChildren && !item.IsExpanded).ToList();
+            foreach (var item in nodesToExpand)
+               ExpandNode(item);
+         } while (TreeItems.Count > previousCount); // Continue if new nodes were added
       }
 
       /// <summary>Inserts the immediate children of <paramref name="item"/> into the flat list.</summary>
