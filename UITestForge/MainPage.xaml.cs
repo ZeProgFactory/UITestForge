@@ -213,12 +213,29 @@ namespace UITestForge
          ActionStatusLabel.Text = hasAgent
             ? $"Agent: {_selectedAgent!.AppName} ({_selectedAgent.Platform})"
             : "Select an agent below";
+
+         // For Android agents, forward the agent port from the emulator to the host
+         // so that `maui devflow --agent-port` and DevFlowAgentClient can reach it.
+         if (hasAgent)
+            _ = ForwardAndroidAgentPortAsync(_selectedAgent!);
 #endif
 
          HideResults();
       }
 
       // ── ADB port forward ──────────────────────────────────────────────────
+
+      /// <summary>
+      /// Automatically forwards the selected Android agent's port from the emulator
+      /// to the Windows host so CLI and HTTP calls to localhost:{port} reach the agent.
+      /// </summary>
+      private async Task ForwardAndroidAgentPortAsync(DevFlowAgent agent)
+      {
+         var error = await DevFlowCliHelper.EnsureAgentPortForwardedAsync(agent);
+         if (error is not null)
+            MainThread.BeginInvokeOnMainThread(()
+               => ActionStatusLabel.Text = $"ADB forward: {error}");
+      }
 
       /// <summary>
       /// Runs <c>adb -s {serial} reverse tcp:19223 tcp:19223</c> for every connected
@@ -290,11 +307,18 @@ namespace UITestForge
 
          try
          {
+            var forwardError = await DevFlowCliHelper.EnsureAgentPortForwardedAsync(_selectedAgent);
+            if (forwardError is not null)
+            {
+               ActionStatusLabel.Text = $"Screenshot failed: {forwardError}";
+               return;
+            }
+
             var tmpPath = Path.ChangeExtension(Path.GetTempFileName(), ".png");
             _lastScreenshotPath = tmpPath;
 
             var (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
-               $"ui screenshot --output \"{tmpPath}\" --overwrite",
+               $"ui screenshot --output \"{tmpPath}\" --overwrite --verbose",
                _selectedAgent);
 
             if (exitCode == 0 && File.Exists(tmpPath))
@@ -306,7 +330,15 @@ namespace UITestForge
             else
             {
                ScreenshotImage.IsVisible = false;
-               ActionStatusLabel.Text = $"Screenshot failed: {stderr.Trim()}";
+               string stderrMessage = stderr.Trim();
+               try
+               {
+                  var errorObj = JsonDocument.Parse(stderrMessage);
+                  if (errorObj.RootElement.TryGetProperty("error", out var errorProp))
+                     stderrMessage = errorProp.GetString() ?? stderrMessage;
+               }
+               catch { /* fallback to raw stderr */ }
+               ActionStatusLabel.Text = $"Screenshot failed: {stderrMessage}";
             }
          }
          catch (Exception ex)
@@ -335,8 +367,15 @@ namespace UITestForge
 
          try
          {
+            var forwardError = await DevFlowCliHelper.EnsureAgentPortForwardedAsync(_selectedAgent);
+            if (forwardError is not null)
+            {
+               ActionStatusLabel.Text = $"Tree failed: {forwardError}";
+               return;
+            }
+
             var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
-               "ui tree --depth 0",
+               "ui tree",
                _selectedAgent);
 
             if (exitCode == 0 && stdout.Length > 0)

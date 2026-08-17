@@ -76,6 +76,43 @@ internal static class DevFlowCliHelper
 #endif
 
    /// <summary>
+   /// Ensures the agent's REST port is forwarded from the Windows host to the
+   /// Android emulator via <c>adb forward tcp:{port} tcp:{port}</c>.<br/>
+   /// Does nothing when the agent is not an Android agent.
+   /// </summary>
+   /// <returns>
+   /// <see langword="null"/> on success, or an error string describing what went wrong.
+   /// </returns>
+   public static async Task<string?> EnsureAgentPortForwardedAsync(DevFlowAgent agent)
+   {
+      if (!agent.Platform.Contains("android", StringComparison.OrdinalIgnoreCase))
+         return null;
+
+      var (devices, err) = await RunAdbAsync("devices");
+      if (devices.Length == 0 && err.Length > 0)
+         return $"adb error: {err.Trim()}";
+
+      // Accept any connected device/emulator — emulators show as "emulator-XXXX"
+      // but a USB-connected device running the app is equally valid.
+      var serial = devices
+         .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+         .Skip(1)
+         .Select(l => l.Split('\t'))
+         .Where(p => p.Length >= 2 && p[1].Trim() == "device")
+         .Select(p => p[0].Trim())
+         .FirstOrDefault();
+
+      if (serial is null)
+         return "No connected Android device/emulator found.";
+
+      var (stdout, stderr) = await RunAdbAsync(
+         $"-s {serial} forward tcp:{agent.Port} tcp:{agent.Port}");
+
+      // adb forward prints the forwarded port number on success
+      return stderr.Trim().Length > 0 ? $"adb forward error: {stderr.Trim()}" : null;
+   }
+
+   /// <summary>
    /// Runs an <c>adb</c> command and returns (stdout, stderr).
    /// Prefers the ANDROID_HOME / ANDROID_SDK_ROOT environment variable,
    /// falling back to the common Windows install path and then PATH.
