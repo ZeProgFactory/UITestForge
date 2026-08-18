@@ -378,7 +378,39 @@ namespace UITestForge
          await TakeScreenshotAsync();
       }
 
-      // ── Visual tree ──────────────────────────────────────────────────────
+      private async void OnCopyScreenshotClicked(object? sender, EventArgs e)
+      {
+         try
+         {
+            if (string.IsNullOrEmpty(_lastScreenshotPath) || !File.Exists(_lastScreenshotPath))
+            {
+               await DisplayAlert("Copy Failed", "No screenshot available to copy.", "OK");
+               return;
+            }
+
+            // Read the image file as bytes
+            var imageBytes = await File.ReadAllBytesAsync(_lastScreenshotPath);
+
+            // Encode as base64 data URI for clipboard (fallback approach)
+            var base64Image = Convert.ToBase64String(imageBytes);
+            var dataUri = $"data:image/png;base64,{base64Image}";
+
+            // Copy the file path to clipboard as text (most compatible approach)
+            await Clipboard.Default.SetTextAsync(_lastScreenshotPath);
+
+            ActionStatusLabel.Text = $"Screenshot path copied to clipboard: {System.IO.Path.GetFileName(_lastScreenshotPath)}";
+         }
+         catch (Exception ex)
+         {
+            await DisplayAlert("Copy Failed", $"Failed to copy screenshot: {ex.Message}", "OK");
+         }
+      }
+
+      // ── Visual tree ────────────────────────────────────────────────────
+      private void OnTreeViewRefreshClicked(object sender, EventArgs e)
+      {
+         OnTreeClicked(null, null);
+      }
 
       private async void OnTreeClicked(object? sender, EventArgs e)
       {
@@ -469,7 +501,10 @@ namespace UITestForge
                {
                   ActionStatusLabel.Text = "Tree loaded — 0 nodes";
                }
+
                TreeColumn.IsVisible = true;
+               NodeDetailFrame.IsVisible = true;
+               TreeViewRefreshBtn.IsVisible = true;
             }
             else
             {
@@ -584,6 +619,28 @@ namespace UITestForge
          if (e.Parameter is not TreeNodeItem item || !item.HasChildren) return;
          if (item.IsExpanded) CollapseNode(item);
          else ExpandNode(item);
+      }
+
+      private async void OnTreeNodeDoubleTapped(object? sender, TappedEventArgs e)
+      {
+         if (e.Parameter is not TreeNodeItem item) return;
+
+         var automationId = item.Node.AutomationId;
+         if (string.IsNullOrWhiteSpace(automationId))
+         {
+            ActionStatusLabel.Text = "No AutomationId to copy";
+            return;
+         }
+
+         try
+         {
+            await Clipboard.Default.SetTextAsync(automationId);
+            ActionStatusLabel.Text = $"Copied AutomationId: {automationId}";
+         }
+         catch (Exception ex)
+         {
+            ActionStatusLabel.Text = $"Copy failed: {ex.Message}";
+         }
       }
 
       /// <summary>Expands all collapsed nodes recursively to make all controls visible.</summary>
@@ -761,6 +818,7 @@ namespace UITestForge
          ScriptOutputLabel.Text = text;
          //_ = ScriptOutputScroll.ScrollToAsync(0, ScriptOutputLabel.Height, false);
       }
+
    }
 }
 

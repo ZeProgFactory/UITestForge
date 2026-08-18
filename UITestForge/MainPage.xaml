@@ -122,7 +122,14 @@
                    IsVisible="False"
                    Aspect="AspectFit"
                    HorizontalOptions="Fill"
-                   VerticalOptions="Fill" />
+                   VerticalOptions="Fill">
+                  <FlyoutBase.ContextFlyout>
+                     <MenuFlyout>
+                        <MenuFlyoutItem Text="Copy to Clipboard"
+                                        Clicked="OnCopyScreenshotClicked" />
+                     </MenuFlyout>
+                  </FlyoutBase.ContextFlyout>
+               </Image>
 
                <!-- Refresh button overlay -->
                <Button x:Name="ScreenshotRefreshBtn"
@@ -133,10 +140,10 @@
                        WidthRequest="40"
                        HeightRequest="40"
                        CornerRadius="20"
-                       BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2D2D2D}"
+                       BackgroundColor="{AppThemeBinding Light=#D5DBEB, Dark=#2D2D2D}"
                        BorderColor="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
                        BorderWidth="1"
-                       Opacity="0.6"
+                       Opacity="0.7"
                        HorizontalOptions="End"
                        VerticalOptions="Start"
                        Margin="10"
@@ -159,8 +166,7 @@
                <Shadow Brush="Black" Opacity="0.3" Radius="4" Offset="0,2"/>
             </Border.Shadow>
 
-            <Grid x:Name="TreeColumn"
-                  RowDefinitions="*,Auto"
+            <Grid x:Name="TreeColumn" RowDefinitions="*,auto"
                RowSpacing="4" >
 
                <!-- Tree node list -->
@@ -174,9 +180,14 @@
                   <CollectionView.ItemTemplate>
                      <DataTemplate>
                         <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
-                           ColumnSpacing="3"
-                           Padding="{Binding IndentPadding}"
-                           HeightRequest="26">
+                              ColumnSpacing="3"
+                              Padding="{Binding IndentPadding}"
+                              HeightRequest="26">
+                           <Grid.GestureRecognizers>
+                              <TapGestureRecognizer NumberOfTapsRequired="2"
+                                                      CommandParameter="{Binding}"
+                                                      Tapped="OnTreeNodeDoubleTapped" />
+                           </Grid.GestureRecognizers>
 
                            <!-- Expand / collapse toggle -->
                            <Label Grid.Column="0"
@@ -226,57 +237,69 @@
                </CollectionView>
 
                <!-- Selected-node detail panel -->
-               <!-- Col 2: Node detail panel -->
+               <!-- Row 1: Node detail panel -->
                <Border x:Name="NodeDetailFrame"
                     Grid.Row="1"
                     Padding="10"
                     StrokeThickness="0"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
-                    IsVisible="False">
+                  BackgroundColor="{AppThemeBinding Light=#D5DBEB, Dark=#1A2035}"
+                  IsVisible="False">
                   <Border.StrokeShape>
                      <RoundRectangle CornerRadius="8"/>
                   </Border.StrokeShape>
                   <Border.Shadow>
                      <Shadow Brush="Black" Opacity="0.2" Radius="8" Offset="0,2"/>
                   </Border.Shadow>
-                  <Border
-                  IsVisible="False"
-                  Padding="10,8"
-                  StrokeThickness="0"
-                  BackgroundColor="{AppThemeBinding Light=#EEF4FF, Dark=#1A2035}">
-                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="6"/>
-                     </Border.StrokeShape>
-                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
-                        <Label Grid.Row="0"
+
+                  <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
+                     <Label Grid.Row="0"
                          Text="{Binding SelectedTreeNode.FullTypeLabel}"
                          FontAttributes="Bold"
                          FontSize="12" />
-                        <Label Grid.Row="1"
+                     <Label Grid.Row="1"
                          Text="{Binding SelectedTreeNode.IdLabel}"
                          FontSize="10"
                          TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                        <Label Grid.Row="2"
+                     <Label Grid.Row="2"
                          Text="{Binding SelectedTreeNode.AutomationIdLabel}"
                          FontSize="11"
                          IsVisible="{Binding SelectedTreeNode.HasAutomationId}" />
-                        <Label Grid.Row="3"
+                     <Label Grid.Row="3"
                          Text="{Binding SelectedTreeNode.TextLabel}"
                          FontSize="11"
                          IsVisible="{Binding SelectedTreeNode.HasText}" />
-                        <Label Grid.Row="4"
+                     <Label Grid.Row="4"
                          Text="{Binding SelectedTreeNode.BoundsLabel}"
                          FontSize="10"
                          TextColor="{AppThemeBinding Light=DimGray, Dark=Silver}" />
-                        <Label Grid.Row="5"
+                     <Label Grid.Row="5"
                          Text="{Binding SelectedTreeNode.StateLabel}"
                          FontSize="10"
                          TextColor="{AppThemeBinding Light=DimGray, Dark=Silver}" />
-                     </Grid>
-                  </Border>
+                  </Grid>
 
                </Border>
 
+               <!-- Refresh button overlay -->
+               <Button x:Name="TreeViewRefreshBtn"
+                       Text="↻"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                       WidthRequest="40"
+                       HeightRequest="40"
+                       CornerRadius="20"
+                       BackgroundColor="{AppThemeBinding Light=#D5DBEB, Dark=#2D2D2D}"
+                       BorderColor="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
+                       BorderWidth="1"
+                       Opacity="0.7"
+                       HorizontalOptions="End"
+                       VerticalOptions="Start"
+                       Margin="10"
+                       Padding="0"
+                       IsVisible="False"
+                       Clicked="OnTreeViewRefreshClicked"
+                       ToolTipProperties.Text="Refresh TreeView" />
             </Grid>
          </Border>
 
@@ -326,6 +349,7 @@
                           Placeholder="# Write your devflow script here&#x0a;# Available commands: tap, fill, clear, focus, navigate, scroll, screenshot&#x0a;# Example:&#x0a;tap MyButton&#x0a;fill MyEntry Hello&#x0a;screenshot"
                           AutoSize="TextChanges"
                           VerticalOptions="Fill"
+                          IsSpellCheckEnabled="False"
                           Margin="4" />
                </Border>
 
@@ -375,13 +399,14 @@
                   <Border.StrokeShape>
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
-                  
+
                   <Editor x:Name="ScriptOutputLabel"
-                            FontFamily="Courier New"
-                            FontSize="11"
-                            IsReadOnly="True"
-                            Margin="6,4"
-                            Text="(output will appear here)" />
+                        FontFamily="Courier New"
+                        FontSize="11"
+                        IsSpellCheckEnabled="False"
+                        IsReadOnly="True"
+                        Margin="6,4"
+                        Placeholder="(output will appear here)" />
                </Border>
 
             </Grid>

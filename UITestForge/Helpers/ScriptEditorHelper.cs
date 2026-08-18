@@ -69,6 +69,18 @@ namespace UITestForge.Helpers
                      resultLine = $"    \u2717 {stderr.Trim()}";
                   }
                }
+               else if (cmd == "wait")
+               {
+                  if (!int.TryParse(rest.Trim(), out int seconds) || seconds < 0)
+                  {
+                     resultLine = "    ✗ wait requires a positive number of seconds";
+                  }
+                  else
+                  {
+                     await Task.Delay(seconds * 1000);
+                     resultLine = $"    ✓ waited {seconds} second{(seconds != 1 ? "s" : "")}";
+                  }
+               }
                else
                {
                   var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
@@ -119,6 +131,10 @@ namespace UITestForge.Helpers
                : $"ui navigate {rest.Trim()}",
 
             "scroll" => ParseScroll(rest),
+
+            "screenshot" => string.Empty, // Handled specially in RunScriptAsync
+
+            "wait" => string.Empty, // Handled specially in RunScriptAsync
 
             _ => throw new ArgumentException($"Unknown command: {cmd}")
          };
