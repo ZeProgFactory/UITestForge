@@ -21,7 +21,7 @@ public class TreeNodeItem : INotifyPropertyChanged
 
    // ── Tree row display ────────────────────────────────────────────────
 
-   public Thickness IndentPadding => new(Depth * 14.0, 2, 4, 2);
+   public Thickness IndentPadding => new(Depth * 18.0, 4, 6, 4);
 
    public string ExpandIcon => HasChildren ? (_isExpanded ? "▾" : "▸") : " ";
 

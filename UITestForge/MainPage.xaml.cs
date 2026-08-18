@@ -200,15 +200,11 @@ namespace UITestForge
 
 #if ANDROID
          // The maui devflow CLI is not available on Android, so Screenshot/Tree cannot be run.
-         ScreenshotBtn.IsEnabled = false;
-         TreeBtn.IsEnabled = false;
          TapCounterBtn.IsEnabled = false;
          ActionStatusLabel.Text = hasAgent
             ? $"Agent: {_selectedAgent!.AppName} ({_selectedAgent.Platform}) — Screenshot/Tree/Tap require Windows"
             : "Select an agent below";
 #else
-         ScreenshotBtn.IsEnabled = hasAgent;
-         TreeBtn.IsEnabled = hasAgent;
          TapCounterBtn.IsEnabled = hasAgent;
          ActionStatusLabel.Text = hasAgent
             ? $"Agent: {_selectedAgent!.AppName} ({_selectedAgent.Platform})"
@@ -221,6 +217,28 @@ namespace UITestForge
 #endif
 
          HideResults();
+
+         // Take screenshot and refresh tree when agent is selected
+         if (hasAgent)
+         {
+            _ = TakeScreenshotAndRefreshTreeAsync();
+         }
+      }
+
+      private async Task TakeScreenshotAndRefreshTreeAsync()
+      {
+#if !ANDROID
+         if (_selectedAgent is null) return;
+
+         // Take screenshot
+         await TakeScreenshotAsync();
+
+         // Wait a bit for screenshot to complete, then refresh tree
+         await Task.Delay(500);
+
+         // Refresh tree
+         OnTreeClicked(null, EventArgs.Empty);
+#endif
       }
 
       // ── ADB port forward ──────────────────────────────────────────────────
@@ -291,10 +309,9 @@ namespace UITestForge
       }
 
 
-
       // ── Screenshot ───────────────────────────────────────────────────────
 
-      private async void OnScreenshotClicked(object? sender, EventArgs e)
+      private async Task TakeScreenshotAsync()
       {
 #if ANDROID
          ActionStatusLabel.Text = "Screenshot requires running UITestForge on Windows.";
@@ -303,7 +320,6 @@ namespace UITestForge
          if (_selectedAgent is null) return;
 
          SetBusy(true, "Taking screenshot…");
-         TreeColumn.IsVisible = false;
 
          try
          {
@@ -325,6 +341,7 @@ namespace UITestForge
             {
                ScreenshotImage.Source = ImageSource.FromFile(tmpPath);
                ScreenshotImage.IsVisible = true;
+               ScreenshotRefreshBtn.IsVisible = true;
                ActionStatusLabel.Text = $"Screenshot captured — {new FileInfo(tmpPath).Length / 1024} KB";
             }
             else
@@ -352,6 +369,12 @@ namespace UITestForge
 #endif
       }
 
+      private async void OnScreenshotRefreshClicked(object? sender, EventArgs e)
+      {
+         // Simply call the existing screenshot functionality
+         await TakeScreenshotAsync();
+      }
+
       // ── Visual tree ──────────────────────────────────────────────────────
 
       private async void OnTreeClicked(object? sender, EventArgs e)
@@ -363,7 +386,6 @@ namespace UITestForge
          if (_selectedAgent is null) return;
 
          SetBusy(true, "Fetching visual tree…");
-         ScreenshotImage.IsVisible = false;
 
          try
          {
@@ -435,11 +457,6 @@ namespace UITestForge
                      diagnosticInfo += $" [Auto-expanded: {beforeCount} → {TreeItems.Count} nodes]";
                   }
 
-                  if (customPickerCount > 0)
-                     diagnosticInfo += $" CustomPicker: {customPickerCount} at depth {string.Join(",", customPickerDepths)};";
-                  if (customEntryCount > 0)
-                     diagnosticInfo += $" CustomEntry: {customEntryCount} at depth {string.Join(",", customEntryDepths)};";
-
                   if (string.IsNullOrEmpty(diagnosticInfo))
                      diagnosticInfo = " (no CustomPicker/CustomEntry found)";
 
@@ -469,8 +486,6 @@ namespace UITestForge
       }
 
       // ── Helpers ──────────────────────────────────────────────────────────
-
-
 
       // ── Tap CounterBtn ────────────────────────────────────────────────────
 
@@ -596,8 +611,6 @@ namespace UITestForge
       {
          Busy.IsRunning = busy;
          Busy.IsVisible = busy;
-         ScreenshotBtn.IsEnabled = !busy && _selectedAgent is not null;
-         TreeBtn.IsEnabled = !busy && _selectedAgent is not null;
          TapCounterBtn.IsEnabled = !busy && _selectedAgent is not null;
          if (message is not null)
             ActionStatusLabel.Text = message;
@@ -613,14 +626,66 @@ namespace UITestForge
 
       // ── Script Editor ─────────────────────────────────────────────────────────
 
-      private void OnInsertSnippet(object? sender, EventArgs e)
+      private async void OnScriptLoadClicked(object? sender, EventArgs e)
       {
-         if (sender is not Button btn) return;
-         var snippet = btn.CommandParameter as string ?? string.Empty;
-         var current = ScriptEditor.Text ?? string.Empty;
-         ScriptEditor.Text = current.Length > 0 && !current.EndsWith('\n')
-            ? current + "\n" + snippet
-            : current + snippet;
+         try
+         {
+            var result = await FilePicker.PickAsync(new PickOptions
+            {
+               PickerTitle = "Select a DevFlow script file",
+               FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+               {
+                  { DevicePlatform.WinUI, new[] { ".txt", ".devflow", ".script" } },
+                  { DevicePlatform.macOS, new[] { "txt", "devflow", "script" } },
+                  { DevicePlatform.iOS, new[] { "public.text" } },
+                  { DevicePlatform.Android, new[] { "text/plain" } }
+               })
+            });
+
+            if (result != null)
+            {
+               using var stream = await result.OpenReadAsync();
+               using var reader = new StreamReader(stream);
+               var content = await reader.ReadToEndAsync();
+
+               ScriptEditor.Text = content;
+               ScriptStatusLabel.Text = $"Loaded: {result.FileName}";
+            }
+         }
+         catch (Exception ex)
+         {
+            ScriptStatusLabel.Text = $"Load failed: {ex.Message}";
+         }
+      }
+
+      private async void OnScriptSaveClicked(object? sender, EventArgs e)
+      {
+         try
+         {
+            var scriptContent = ScriptEditor.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(scriptContent))
+            {
+               ScriptStatusLabel.Text = "Nothing to save.";
+               return;
+            }
+
+            var defaultFileName = $"script_{DateTime.Now:yyyyMMdd_HHmmss}.devflow";
+            var filePath = Path.Combine(FileSystem.Current.CacheDirectory, defaultFileName);
+
+            await File.WriteAllTextAsync(filePath, scriptContent);
+
+            ScriptStatusLabel.Text = $"Saved to: {Path.GetFileName(filePath)}";
+
+            // Optionally show the full path in an alert
+            await DisplayAlertAsync("Script Saved", 
+               $"Script saved successfully to:\n{filePath}\n\nYou can find it in the app's cache directory.", 
+               "OK");
+         }
+         catch (Exception ex)
+         {
+            ScriptStatusLabel.Text = $"Save failed: {ex.Message}";
+            await DisplayAlertAsync("Save Error", $"Failed to save script: {ex.Message}", "OK");
+         }
       }
 
       private void OnScriptClearClicked(object? sender, EventArgs e)
@@ -628,6 +693,24 @@ namespace UITestForge
          ScriptEditor.Text = string.Empty;
          ScriptOutputLabel.Text = "(output will appear here)";
          ScriptStatusLabel.Text = "Ready";
+      }
+
+      private async void OnShowSyntaxHelperClicked(object? sender, EventArgs e)
+      {
+         await DisplayAlertAsync("DevFlow Script Syntax",
+            "Available commands:\n\n" +
+            "tap <AutomationId>\n" +
+            "fill <AutomationId> <text>\n" +
+            "clear <AutomationId>\n" +
+            "focus <AutomationId>\n" +
+            "navigate <url>\n" +
+            "scroll <direction>\n" +
+            "screenshot\n\n" +
+            "Example:\n" +
+            "tap MyButton\n" +
+            "fill MyEntry Hello\n" +
+            "screenshot",
+            "OK");
       }
 
       private async void OnScriptRunClicked(object? sender, EventArgs e)
@@ -657,6 +740,7 @@ namespace UITestForge
                {
                   ScreenshotImage.Source = ImageSource.FromFile(path);
                   ScreenshotImage.IsVisible = true;
+                  ScreenshotRefreshBtn.IsVisible = true;
                   _lastScreenshotPath = path;
                });
 
