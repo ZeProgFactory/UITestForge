@@ -20,7 +20,7 @@ namespace UITestForge.Helpers
          Action<string> onOutputUpdate,
          Action<string> onScreenshotCaptured)
       {
-         var lines = scriptText.Split('\n', StringSplitOptions.None);
+         var lines = scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
          var log = new System.Text.StringBuilder();
          int stepNum = 0;
 
@@ -129,12 +129,15 @@ namespace UITestForge.Helpers
       /// </summary>
       private static string ParseFill(string rest)
       {
+         // maui devflow ui fill --text --automationId PhoneNumberEntry abc
+
          var idx = rest.IndexOf(' ');
          if (idx < 0)
             throw new ArgumentException("fill requires an automationId and text (e.g. fill MyEntry Hello)");
          var id = rest[..idx].Trim();
          var text = rest[(idx + 1)..].Trim();
-         return $"ui fill --automationId \"{id}\" --text \"{text}\"";
+
+         return $"ui fill --text --automationId {id} \"{text}\"".Replace("\"\"", "\"");
       }
 
       /// <summary>

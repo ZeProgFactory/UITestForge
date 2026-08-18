@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               x:Class="UITestForge.Views.SyntaxHelpPopup"
+               CanBeDismissedByTappingOutsideOfPopup="True">
+
+    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+            StrokeThickness="0"
+            MaximumWidthRequest="600"
+            Padding="24"
+            HorizontalOptions="Center"
+            VerticalOptions="Center">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="12"/>
+        </Border.StrokeShape>
+        <Border.Shadow>
+            <Shadow Brush="Black" Opacity="0.3" Radius="10" Offset="0,4"/>
+        </Border.Shadow>
+
+        <VerticalStackLayout Spacing="16">
+            <Label Text="DevFlow Script Syntax"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Start" />
+
+            <ScrollView MaximumHeightRequest="400">
+                <VerticalStackLayout Spacing="12">
+                    <Label FontSize="14" LineBreakMode="WordWrap">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Available commands:" FontAttributes="Bold"/>
+                                <Span Text="&#x0a;&#x0a;"/>
+
+                                <Span Text="tap " FontFamily="Consolas"/>
+                                <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
+                                <Span Text="&#x0a;"/>
+
+                                <Span Text="fill " FontFamily="Consolas"/>
+                                <Span Text="&lt;AutomationId&gt; &lt;text&gt;" FontAttributes="Italic"/>
+                                <Span Text="&#x0a;"/>
+
+                                <Span Text="clear " FontFamily="Consolas"/>
+                                <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
+                                <Span Text="&#x0a;"/>
+
+                                <Span Text="focus " FontFamily="Consolas"/>
+                                <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
+                                <Span Text="&#x0a;"/>
+
+                                <Span Text="navigate " FontFamily="Consolas"/>
+                                <Span Text="&lt;url&gt;" FontAttributes="Italic"/>
+                                <Span Text="&#x0a;"/>
+
+                                <Span Text="scroll " FontFamily="Consolas"/>
+                                <Span Text="&lt;direction&gt;" FontAttributes="Italic"/>
+                                <Span Text="&#x0a;"/>
+
+                                <Span Text="screenshot" FontFamily="Consolas"/>
+                                <Span Text="&#x0a;&#x0a;"/>
+
+                                <Span Text="Example:" FontAttributes="Bold"/>
+                                <Span Text="&#x0a;"/>
+                                <Span Text="tap MyButton" FontFamily="Consolas"/>
+                                <Span Text="&#x0a;"/>
+                                <Span Text="fill MyEntry Hello" FontFamily="Consolas"/>
+                                <Span Text="&#x0a;"/>
+                                <Span Text="screenshot" FontFamily="Consolas"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <Button Text="OK"
+                    HorizontalOptions="End"
+                    MinimumWidthRequest="100"
+                    Clicked="OnOkClicked"/>
+        </VerticalStackLayout>
+    </Border>
+</toolkit:Popup>

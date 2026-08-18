@@ -3,6 +3,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using UITestForge.Helpers;
+using UITestForge.Views;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 
 namespace UITestForge
 {
@@ -330,7 +333,7 @@ namespace UITestForge
                return;
             }
 
-            var tmpPath = Path.ChangeExtension(Path.GetTempFileName(), ".png");
+            var tmpPath = System.IO.Path.ChangeExtension(System.IO.Path.GetTempFileName(), ".png");
             _lastScreenshotPath = tmpPath;
 
             var (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
@@ -670,11 +673,11 @@ namespace UITestForge
             }
 
             var defaultFileName = $"script_{DateTime.Now:yyyyMMdd_HHmmss}.devflow";
-            var filePath = Path.Combine(FileSystem.Current.CacheDirectory, defaultFileName);
+            var filePath = System.IO.Path.Combine(FileSystem.Current.CacheDirectory, defaultFileName);
 
             await File.WriteAllTextAsync(filePath, scriptContent);
 
-            ScriptStatusLabel.Text = $"Saved to: {Path.GetFileName(filePath)}";
+            ScriptStatusLabel.Text = $"Saved to: {System.IO.Path.GetFileName(filePath)}";
 
             // Optionally show the full path in an alert
             await DisplayAlertAsync("Script Saved", 
@@ -695,22 +698,10 @@ namespace UITestForge
          ScriptStatusLabel.Text = "Ready";
       }
 
-      private async void OnShowSyntaxHelperClicked(object? sender, EventArgs e)
+      private void OnShowSyntaxHelperClicked(object? sender, EventArgs e)
       {
-         await DisplayAlertAsync("DevFlow Script Syntax",
-            "Available commands:\n\n" +
-            "tap <AutomationId>\n" +
-            "fill <AutomationId> <text>\n" +
-            "clear <AutomationId>\n" +
-            "focus <AutomationId>\n" +
-            "navigate <url>\n" +
-            "scroll <direction>\n" +
-            "screenshot\n\n" +
-            "Example:\n" +
-            "tap MyButton\n" +
-            "fill MyEntry Hello\n" +
-            "screenshot",
-            "OK");
+         var popup = new SyntaxHelpPopup();
+         this.ShowPopup(popup);
       }
 
       private async void OnScriptRunClicked(object? sender, EventArgs e)
@@ -768,7 +759,7 @@ namespace UITestForge
       private void AppendOutput(string text)
       {
          ScriptOutputLabel.Text = text;
-         _ = ScriptOutputScroll.ScrollToAsync(0, ScriptOutputLabel.Height, false);
+         //_ = ScriptOutputScroll.ScrollToAsync(0, ScriptOutputLabel.Height, false);
       }
    }
 }

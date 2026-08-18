@@ -85,7 +85,7 @@
                  AutomationId="AdbForwardBtn"
                  Clicked="OnAdbForwardClicked"
                  ToolTipProperties.Text="Run adb reverse tcp:19223 tcp:19223 on emulator-5554 so the Android DevFlow agent can reach the broker" />
-         
+
          <Label x:Name="ActionStatusLabel"
                 Grid.Column="2"
                 Text="Select an agent above"
@@ -331,7 +331,7 @@
 
                <!-- Run / Clear buttons -->
                <Grid Grid.Row="3" RowDefinitions="auto,auto" ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,2,0,0">
-                  
+
                   <Button x:Name="ScriptLoadBtn"
                           Grid.Column="0"
                           Text="📂 Load"
@@ -356,9 +356,9 @@
                           FontSize="12"
                           Padding="8,4"
                           Clicked="OnScriptRunClicked" />
-                  
+
                   <Label x:Name="ScriptStatusLabel"
-                         Grid.Row="1"
+                         Grid.Row="1" Grid.ColumnSpan="4"
                          Text="Ready"
                          VerticalOptions="Center"
                          FontSize="12"
@@ -375,15 +375,13 @@
                   <Border.StrokeShape>
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
-                  <ScrollView x:Name="ScriptOutputScroll" Orientation="Vertical">
-                     <Label x:Name="ScriptOutputLabel"
+                  
+                  <Editor x:Name="ScriptOutputLabel"
                             FontFamily="Courier New"
                             FontSize="11"
-                            LineBreakMode="CharacterWrap"
-                            VerticalOptions="Start"
+                            IsReadOnly="True"
                             Margin="6,4"
                             Text="(output will appear here)" />
-                  </ScrollView>
                </Border>
 
             </Grid>
