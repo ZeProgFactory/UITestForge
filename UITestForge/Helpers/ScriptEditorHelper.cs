@@ -5,7 +5,7 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page.
    /// </summary>
    internal static class ScriptEditorHelper
    {
@@ -75,6 +75,11 @@ namespace UITestForge.Helpers
                   {
                      onScreenshotCaptured(tmpPath);
                      resultLine = $"    \u2713 screenshot \u2192 {tmpPath}";
+
+                     // Track first and last screenshots
+                     if (firstScreenshot == null)
+                        firstScreenshot = tmpPath;
+                     lastScreenshot = tmpPath;
                   }
                   else
                   {
@@ -96,6 +101,10 @@ namespace UITestForge.Helpers
                else if (cmd == "create-pptx")
                {
                   resultLine = await HandleCreatePptxAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot, agent, scriptFolder);
+               }
+               else if (cmd == "add-report-page")
+               {
+                  resultLine = await HandleAddReportPageAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot);
                }
                else
                {
@@ -153,6 +162,8 @@ namespace UITestForge.Helpers
             "wait" => string.Empty, // Handled specially in RunScriptAsync
 
             "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
+
+            "add-report-page" => string.Empty, // Handled specially in RunScriptAsync
 
             _ => throw new ArgumentException($"Unknown command: {cmd}")
          };
@@ -270,6 +281,49 @@ namespace UITestForge.Helpers
          catch (Exception ex)
          {
             return $"    ✗ Failed to create PowerPoint: {ex.Message}";
+         }
+      }
+
+      /// <summary>
+      /// Handles the <c>add-report-page</c> command to add a report page to the current PPTX.
+      /// Expected format: <c>add-report-page [title]</c>
+      /// If title is omitted, uses: Test Report
+      /// Uses the first and last screenshots captured during script execution.
+      /// </summary>
+      private static Task<string> HandleAddReportPageAsync(
+         string rest,
+         string scriptText,
+         string executionLogs,
+         string? beforeImagePath,
+         string? afterImagePath)
+      {
+         try
+         {
+            // Check if a PPTX file is currently open
+            if (string.IsNullOrEmpty(PptxReportHelper.CurrentPPTXFile) || 
+                !File.Exists(PptxReportHelper.CurrentPPTXFile))
+            {
+               return Task.FromResult("    \u2717 No PPTX file open. Use 'create-pptx' first.");
+            }
+
+            // Parse title argument
+            var title = !string.IsNullOrWhiteSpace(rest)
+               ? rest.Trim('"')
+               : "Test Report";
+
+            // Add the report page
+            PptxReportHelper.AddReportPage(
+               beforeImagePath,
+               afterImagePath,
+               executionLogs,
+               scriptText,
+               title);
+
+            return Task.FromResult($"    \u2713 Report page added to {Path.GetFileName(PptxReportHelper.CurrentPPTXFile)}");
+         }
+         catch (Exception ex)
+         {
+            return Task.FromResult($"    \u2717 Failed to add report page: {ex.Message}");
          }
       }
    }

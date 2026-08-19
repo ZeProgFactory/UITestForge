@@ -9,6 +9,8 @@ namespace UITestForge.Helpers;
 /// </summary>
 internal static class PptxReportHelper
 {
+   public static string CurrentPPTXFile = "";
+
    // ── Public entry points ───────────────────────────────────────────────────
 
    /// <summary>
@@ -38,40 +40,7 @@ internal static class PptxReportHelper
       const int contentWidth = 500;
       const int boxPadding = 40;
 
-      // Add background image - try multiple potential paths
-      var possiblePaths = new[]
-      {
-         Path.Combine(AppContext.BaseDirectory, "Resources", "Images", "powerpoint.png"),
-         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Resources", "Images", "powerpoint.png"),
-         Path.Combine(Environment.CurrentDirectory, "Resources", "Images", "powerpoint.png"),
-         "Resources/Images/powerpoint.png"
-      };
-
-      string? backgroundImagePath = null;
-      foreach (var path in possiblePaths)
-      {
-         var fullPath = Path.GetFullPath(path);
-         if (File.Exists(fullPath))
-         {
-            backgroundImagePath = fullPath;
-            break;
-         }
-      }
-
-      if (backgroundImagePath != null)
-      {
-         // Load image bytes into memory stream to keep it available until Save
-         var imageBytes = File.ReadAllBytes(backgroundImagePath);
-         var imageStream = new MemoryStream(imageBytes);
-         shapes.AddPicture(imageStream);
-         var backgroundPicture = shapes.Last();
-         backgroundPicture.X = 0;
-         backgroundPicture.Y = 0;
-         backgroundPicture.Width = slideWidth;
-         backgroundPicture.Height = slideHeight;
-      }
-
-
+      AddBackgroundImage(shapes, slideWidth, slideHeight);
 
       // Calculate number of lines needed
       int lineCount = 1; // title
@@ -176,9 +145,318 @@ internal static class PptxReportHelper
       timestampShape.TextBox.Paragraphs.First().SetFontSize(20);
 
       pres.Save(outputPath);
+      CurrentPPTXFile = outputPath;
    }
 
+   private static void AddBackgroundImage(IUserSlideShapeCollection shapes, decimal slideWidth, decimal slideHeight)
+   {
+      // Add background image - try multiple potential paths
+      var possiblePaths = new[]
+      {
+         Path.Combine(AppContext.BaseDirectory, "Resources", "Images", "powerpoint.png"),
+         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Resources", "Images", "powerpoint.png"),
+         Path.Combine(Environment.CurrentDirectory, "Resources", "Images", "powerpoint.png"),
+         "Resources/Images/powerpoint.png"
+      };
 
+      string? backgroundImagePath = null;
+      foreach (var path in possiblePaths)
+      {
+         var fullPath = Path.GetFullPath(path);
+         if (File.Exists(fullPath))
+         {
+            backgroundImagePath = fullPath;
+            break;
+         }
+      }
+
+      if (backgroundImagePath != null)
+      {
+         // Load image bytes into memory stream to keep it available until Save
+         var imageBytes = File.ReadAllBytes(backgroundImagePath);
+         var imageStream = new MemoryStream(imageBytes);
+         shapes.AddPicture(imageStream);
+         var backgroundPicture = shapes.Last();
+         backgroundPicture.X = 0;
+         backgroundPicture.Y = 0;
+         backgroundPicture.Width = slideWidth;
+         backgroundPicture.Height = slideHeight;
+      }
+   }
+
+   /// <summary>
+   /// Adds a report page to the current PPTX file with 3 columns:
+   /// - Left: Before image
+   /// - Center: Script execution log
+   /// - Right: After image
+   /// The script text is placed in the slide's speaker notes.
+   /// Note: This creates a new single-slide PPTX file at the moment since ShapeCrawler 
+   /// doesn't easily support adding slides to existing presentations.
+   /// </summary>
+   /// <param name="beforeImagePath">Path to the "before" screenshot image</param>
+   /// <param name="afterImagePath">Path to the "after" screenshot image</param>
+   /// <param name="executionLog">Multi-line text containing execution logs</param>
+   /// <param name="scriptText">Script text to be added to speaker notes</param>
+   /// <param name="slideTitle">Optional title for the slide (default: "Test Report")</param>
+   public static void AddReportPage(
+       string? beforeImagePath,
+       string? afterImagePath,
+       string executionLog,
+       string scriptText,
+       string slideTitle = "Test Report")
+   {
+      if (string.IsNullOrEmpty(CurrentPPTXFile) || !File.Exists(CurrentPPTXFile))
+      {
+         throw new InvalidOperationException("No current PPTX file. Create a report first using CreateReport().");
+      }
+
+
+      // Load the existing presentation
+      var pres = new Presentation(CurrentPPTXFile);
+      var initialCount = pres.Slides.Count;
+      
+      // Get the first slide layout from the first slide master
+      int slideLayout = pres.MasterSlides[0].LayoutSlides[0].Number;
+
+      // Add a new slide
+      pres.Slides.Add(slideLayout);
+      var newSlide = pres.Slides[initialCount]; // Get the newly added slide
+      var shapes = newSlide.Shapes;
+
+      // Get slide dimensions
+      int slideWidth = (int)pres.SlideWidth;
+      int slideHeight = (int)pres.SlideHeight;
+
+      // Layout constants
+      const int margin = 20;
+      const int titleHeight = 60;
+      const int columnSpacing = 15;
+
+      // Calculate column width (3 equal columns)
+      int availableWidth = slideWidth - (2 * margin) - (2 * columnSpacing);
+      int columnWidth = availableWidth / 3;
+
+      // Content area (below title)
+      int contentY = margin + titleHeight + 10;
+      int contentHeight = slideHeight - contentY - margin;
+
+      AddBackgroundImage(shapes, slideWidth, slideHeight);
+
+      // Add slide title
+      shapes.AddShape(
+          x: margin,
+          y: margin,
+          width: slideWidth - (2 * margin),
+          height: titleHeight,
+          geometry: Geometry.Rectangle);
+      var titleShape = shapes.Last();
+      titleShape.Fill.SetColor("4472C4"); // Blue background
+      titleShape.Outline.SetNoOutline();
+      titleShape.TextBox.SetText(slideTitle);
+      titleShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
+      titleShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
+      titleShape.TextBox.Paragraphs.First().SetFontColor("FFFFFF"); // White text
+      titleShape.TextBox.Paragraphs.First().SetFontSize(28);
+      titleShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
+
+      // Column 1: Before Image (Left)
+      int col1X = margin;
+      AddColumnWithImage(shapes, col1X, contentY, columnWidth, contentHeight, "Before", beforeImagePath);
+
+      // Column 2: Execution Log (Center)
+      int col2X = col1X + columnWidth + columnSpacing;
+      AddColumnWithText(shapes, col2X, contentY, columnWidth, contentHeight, "Execution Log", executionLog);
+
+      // Column 3: After Image (Right)
+      int col3X = col2X + columnWidth + columnSpacing;
+      AddColumnWithImage(shapes, col3X, contentY, columnWidth, contentHeight, "After", afterImagePath);
+
+      // Create notes if they don't exist
+      newSlide.AddNotes(scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
+
+      // Save the presentation back to the same file
+      pres.Save(CurrentPPTXFile);
+   }
+
+   /// <summary>
+   /// Helper method to add a column with a header and an image.
+   /// </summary>
+   private static void AddColumnWithImage(
+       IUserSlideShapeCollection shapes,
+       int x,
+       int y,
+       int width,
+       int height,
+       string headerText,
+       string? imagePath)
+   {
+      const int headerHeight = 40;
+      const int spacing = 5;
+
+      // Add column border/background
+      shapes.AddShape(
+          x: x,
+          y: y,
+          width: width,
+          height: height,
+          geometry: Geometry.Rectangle);
+      var borderShape = shapes.Last();
+      borderShape.Fill.SetColor("F2F2F2"); // Light gray background
+      borderShape.Outline.Weight = 1;
+      borderShape.Outline.SetHexColor("CCCCCC"); // Gray border
+
+      // Add header
+      shapes.AddShape(
+          x: x,
+          y: y,
+          width: width,
+          height: headerHeight,
+          geometry: Geometry.Rectangle);
+      var headerShape = shapes.Last();
+      headerShape.Fill.SetColor("D6E8F5"); // Light blue background
+      headerShape.Outline.SetNoOutline();
+      headerShape.TextBox.SetText(headerText);
+      headerShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
+      headerShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
+      headerShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex());
+      headerShape.TextBox.Paragraphs.First().SetFontSize(18);
+      headerShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
+
+      // Add image if provided
+      if (!string.IsNullOrWhiteSpace(imagePath) && File.Exists(imagePath))
+      {
+         int imageY = y + headerHeight + spacing;
+         int imageHeight = height - headerHeight - (2 * spacing);
+         int imageWidth = width - (2 * spacing);
+
+         try
+         {
+            // Load image bytes into memory stream
+            var imageBytes = File.ReadAllBytes(imagePath);
+            var imageStream = new MemoryStream(imageBytes);
+            shapes.AddPicture(imageStream);
+            var picture = shapes.Last();
+
+            // Set  image position and dimensions
+            picture.X = x + spacing;
+            picture.Y = imageY;
+            picture.Width = imageWidth;
+            picture.Height = imageHeight;
+         }
+         catch
+         {
+            // If image loading fails, add placeholder text
+            shapes.AddShape(
+                x: x + spacing,
+                y: imageY,
+                width: imageWidth,
+                height: imageHeight,
+                geometry: Geometry.Rectangle);
+            var placeholderShape = shapes.Last();
+            placeholderShape.Fill.SetNoFill();
+            placeholderShape.Outline.SetNoOutline();
+            placeholderShape.TextBox.SetText("Image not available");
+            placeholderShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
+            placeholderShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
+            placeholderShape.TextBox.Paragraphs.First().SetFontColor("999999");
+            placeholderShape.TextBox.Paragraphs.First().SetFontSize(14);
+         }
+      }
+      else
+      {
+         // Add "No image" placeholder
+         int imageY = y + headerHeight + spacing;
+         int imageHeight = height - headerHeight - (2 * spacing);
+         int imageWidth = width - (2 * spacing);
+
+         shapes.AddShape(
+             x: x + spacing,
+             y: imageY,
+             width: imageWidth,
+             height: imageHeight,
+             geometry: Geometry.Rectangle);
+         var placeholderShape = shapes.Last();
+         placeholderShape.Fill.SetNoFill();
+         placeholderShape.Outline.SetNoOutline();
+         placeholderShape.TextBox.SetText("No image");
+         placeholderShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
+         placeholderShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
+         placeholderShape.TextBox.Paragraphs.First().SetFontColor("CCCCCC");
+         placeholderShape.TextBox.Paragraphs.First().SetFontSize(14);
+      }
+   }
+
+   /// <summary>
+   /// Helper method to add a column with a header and text content.
+   /// </summary>
+   private static void AddColumnWithText(
+       IUserSlideShapeCollection shapes,
+       int x,
+       int y,
+       int width,
+       int height,
+       string headerText,
+       string contentText)
+   {
+      const int headerHeight = 40;
+      const int spacing = 5;
+
+      // Add column border/background
+      shapes.AddShape(
+          x: x,
+          y: y,
+          width: width,
+          height: height,
+          geometry: Geometry.Rectangle);
+      var borderShape = shapes.Last();
+      borderShape.Fill.SetColor("F2F2F2"); // Light gray background
+      borderShape.Outline.Weight = 1;
+      borderShape.Outline.SetHexColor("CCCCCC"); // Gray border
+
+      // Add header
+      shapes.AddShape(
+          x: x,
+          y: y,
+          width: width,
+          height: headerHeight,
+          geometry: Geometry.Rectangle);
+      var headerShape = shapes.Last();
+      headerShape.Fill.SetColor("D6E8F5"); // Light blue background
+      headerShape.Outline.SetNoOutline();
+      headerShape.TextBox.SetText(headerText);
+      headerShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
+      headerShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
+      headerShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex());
+      headerShape.TextBox.Paragraphs.First().SetFontSize(18);
+      headerShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
+
+      // Add text content
+      int contentY = y + headerHeight + spacing;
+      int contentHeight = height - headerHeight - (2 * spacing);
+      int contentWidth = width - (2 * spacing);
+
+      shapes.AddShape(
+          x: x + spacing,
+          y: contentY,
+          width: contentWidth,
+          height: contentHeight,
+          geometry: Geometry.Rectangle);
+      var textShape = shapes.Last();
+      textShape.Fill.SetColor("FFFFFF"); // White background
+      textShape.Outline.SetNoOutline();
+      textShape.TextBox.SetText(contentText ?? "No log available");
+      textShape.TextBox.VerticalAlignment = TextVerticalAlignment.Top;
+
+      foreach (var p in textShape.TextBox.Paragraphs)
+      {
+         p.HorizontalAlignment = TextHorizontalAlignment.Left;
+         p.SetFontColor("000000");
+         p.SetFontSize(10);
+
+         // Set font family to monospace for better log readability
+         p.Portions.First().Font.LatinName = "Consolas";
+      }
+   }
 
 
 }
