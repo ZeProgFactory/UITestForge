@@ -1,0 +1,25 @@
+# Demo script showing create-pptx command
+# This script demonstrates how to create a PowerPoint report
+# with before/after screenshots and execution logs
+
+# Take a screenshot before performing actions
+screenshot before.png
+
+# Perform some UI interactions
+tap CounterBtn
+wait 1
+tap CounterBtn
+wait 1
+
+# Take a screenshot after performing actions
+screenshot after.png
+
+# Generate a PowerPoint report with all the captured data
+# Usage: create-pptx [filename] [title]
+# - If filename is omitted, generates: report_yyyyMMdd_HHmmss.pptx
+# - If title is omitted, uses: Test Report
+create-pptx demo_report.pptx "Counter Test Demo"
+
+# You can also use create-pptx without arguments:
+# create-pptx
+# This will auto-generate a filename like: report_20250605_143022.pptx

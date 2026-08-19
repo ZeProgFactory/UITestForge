@@ -2,27 +2,39 @@
 
 namespace UITestForge.Helpers
 {
+#if !ANDROID
+   /// <summary>
+   /// Provides script execution capabilities for the UITestForge script editor.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx.
+   /// </summary>
    internal static class ScriptEditorHelper
    {
       /// <summary>
       /// Executes a multi-line script against the given agent.
+      /// Tracks first and last screenshots for PowerPoint report generation via create-pptx command.
       /// </summary>
       /// <param name="scriptText">The raw script text from the editor.</param>
       /// <param name="agent">The DevFlow agent to run commands against.</param>
       /// <param name="onStepStatus">Invoked at the start of each step with <c>(stepNumber, commandName)</c>.</param>
       /// <param name="onOutputUpdate">Invoked after each step with the full accumulated log text.</param>
       /// <param name="onScreenshotCaptured">Invoked when a <c>screenshot</c> step succeeds, with the saved file path.</param>
+      /// <param name="scriptFolder">The folder to use for saving PPTX files when no absolute path is provided.</param>
       /// <returns>The total number of steps executed and any unhandled exception.</returns>
       internal static async Task<(int StepCount, Exception? Error)> RunScriptAsync(
          string scriptText,
          DevFlowAgent agent,
          Action<int, string> onStepStatus,
          Action<string> onOutputUpdate,
-         Action<string> onScreenshotCaptured)
+         Action<string> onScreenshotCaptured,
+         string? scriptFolder = null)
       {
          var lines = scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
          var log = new System.Text.StringBuilder();
          int stepNum = 0;
+
+         // Track screenshots for PPTX generation
+         string? firstScreenshot = null;
+         string? lastScreenshot = null;
 
          try
          {
@@ -81,6 +93,10 @@ namespace UITestForge.Helpers
                      resultLine = $"    ✓ waited {seconds} second{(seconds != 1 ? "s" : "")}";
                   }
                }
+               else if (cmd == "create-pptx")
+               {
+                  resultLine = await HandleCreatePptxAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot, agent, scriptFolder);
+               }
                else
                {
                   var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
@@ -136,6 +152,8 @@ namespace UITestForge.Helpers
 
             "wait" => string.Empty, // Handled specially in RunScriptAsync
 
+            "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
+
             _ => throw new ArgumentException($"Unknown command: {cmd}")
          };
 
@@ -187,5 +205,73 @@ namespace UITestForge.Helpers
          // Treat as automationId — scroll element into view
          return $"ui scroll --element \"{parts[0].Trim()}\"";
       }
+
+      /// <summary>
+      /// Handles the <c>create-pptx</c> command to generate a PowerPoint report.
+      /// Expected format: <c>create-pptx [filename] [title]</c>
+      /// If filename is omitted, generates: report_yyyyMMdd_HHmmss.pptx
+      /// If title is omitted, uses: Test Report
+      /// </summary>
+      private static async Task<string> HandleCreatePptxAsync(
+         string rest,
+         string scriptText,
+         string executionLogs,
+         string? beforeImagePath,
+         string? afterImagePath,
+         DevFlowAgent agent,
+         string? scriptFolder)
+      {
+         try
+         {
+            // Parse arguments: [filename] [title]
+            var parts = rest.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+            var filename = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0])
+               ? parts[0].Trim('"')
+               : $"report_{DateTime.Now:yyyyMMdd_HHmmss}.pptx";
+
+            var title = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1])
+               ? parts[1].Trim('"')
+               : "Test Report";
+
+            // Ensure .pptx extension
+            if (!filename.EndsWith(".pptx", StringComparison.OrdinalIgnoreCase))
+               filename += ".pptx";
+
+            // Generate full path
+            // If filename is absolute, use it; otherwise, use scriptFolder if available, or fall back to AppDataDirectory
+            string outputPath;
+            if (Path.IsPathRooted(filename))
+            {
+               outputPath = filename;
+            }
+            else if (!string.IsNullOrWhiteSpace(scriptFolder))
+            {
+               outputPath = Path.Combine(scriptFolder, filename);
+            }
+            else
+            {
+               outputPath = Path.Combine(FileSystem.AppDataDirectory, filename);
+            }
+
+            // Extract base version (e.g., "0.1.0" from "0.1.0-preview.12.26368.2+...")
+            var shortVersion = agent.Version?.Split(new[] { '-', '+' }, 2)[0] ?? agent.Version;
+
+            // Create the PowerPoint report
+            PptxReportHelper.CreateReport(
+               outputPath,
+               title,
+               agent.AppName,
+               agent.Tfm,
+               shortVersion);
+
+            return $"    ✓ PowerPoint created → {outputPath}";
+         }
+         catch (Exception ex)
+         {
+            return $"    ✗ Failed to create PowerPoint: {ex.Message}";
+         }
+      }
    }
+#endif
 }
