@@ -32,8 +32,15 @@
                         <Span Text="Available commands:" FontAttributes="Bold"/>
                         <Span Text="&#x0a;&#x0a;"/>
 
+                        <Span Text="checkpage " FontFamily="Consolas"/>
+                        <Span Text="&lt;pageName&gt; &lt;label&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
                         <Span Text="clear " FontFamily="Consolas"/>
                         <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
+                        <Span Text="exit" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
 
                         <Span Text="fill " FontFamily="Consolas"/>
@@ -42,6 +49,10 @@
 
                         <Span Text="focus " FontFamily="Consolas"/>
                         <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
+                        <Span Text="goto " FontFamily="Consolas"/>
+                        <Span Text="&lt;label&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
                         <Span Text="navigate " FontFamily="Consolas"/>
@@ -66,17 +77,24 @@
                         <Span Text="&lt;seconds&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;&#x0a;"/>
 
+                        <Span Text="Labels:" FontAttributes="Bold"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="&lt;label&gt;:" FontFamily="Consolas" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;&#x0a;"/>
+
                         <Span Text="Example:" FontAttributes="Bold"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="checkpage MainPage onMain" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
                         <Span Text="tap MyButton" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
+                        <Span Text="exit" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="onMain:" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
                         <Span Text="fill MyEntry Hello" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
-                        <Span Text="wait 2" FontFamily="Consolas"/>
-                        <Span Text="&#x0a;"/>
                         <Span Text="screenshot" FontFamily="Consolas"/>
-                        <Span Text="&#x0a;"/>
-                        <Span Text="scroll down 500" FontFamily="Consolas"/>
                      </FormattedString>
                   </Label.FormattedText>
                </Label>

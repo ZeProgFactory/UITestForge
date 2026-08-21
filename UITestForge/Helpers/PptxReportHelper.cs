@@ -1,4 +1,5 @@
 ﻿using ShapeCrawler;
+using System.Drawing;
 
 namespace UITestForge.Helpers;
 
@@ -214,7 +215,7 @@ internal static class PptxReportHelper
       // Load the existing presentation
       var pres = new Presentation(CurrentPPTXFile);
       var initialCount = pres.Slides.Count;
-      
+
       // Get the first slide layout from the first slide master
       int slideLayout = pres.MasterSlides[0].LayoutSlides[0].Number;
 
@@ -326,22 +327,55 @@ internal static class PptxReportHelper
       if (!string.IsNullOrWhiteSpace(imagePath) && File.Exists(imagePath))
       {
          int imageY = y + headerHeight + spacing;
-         int imageHeight = height - headerHeight - (2 * spacing);
-         int imageWidth = width - (2 * spacing);
+         int availableHeight = height - headerHeight - (2 * spacing);
+         int availableWidth = width - (2 * spacing);
 
          try
          {
             // Load image bytes into memory stream
             var imageBytes = File.ReadAllBytes(imagePath);
             var imageStream = new MemoryStream(imageBytes);
+
+            // Get actual image dimensions
+            int actualImageWidth, actualImageHeight;
+            using(var img = System.Drawing.Image.FromStream(new MemoryStream(imageBytes)))
+            {
+               actualImageWidth = img.Width;
+               actualImageHeight = img.Height;
+            }
+
+            // Calculate aspect ratio
+            double imageAspectRatio = (double)actualImageWidth / actualImageHeight;
+            double availableAspectRatio = (double)availableWidth / availableHeight;
+
+            int scaledWidth, scaledHeight;
+
+            // Scale to fit while maintaining aspect ratio
+            if (imageAspectRatio > availableAspectRatio)
+            {
+               // Image is wider - fit to width
+               scaledWidth = availableWidth;
+               scaledHeight = (int)(availableWidth / imageAspectRatio);
+            }
+            else
+            {
+               // Image is taller - fit to height
+               scaledHeight = availableHeight;
+               scaledWidth = (int)(availableHeight * imageAspectRatio);
+            }
+
+            // Center the image within the available space
+            int centeredX = x + spacing + (availableWidth - scaledWidth) / 2;
+            int centeredY = imageY + (availableHeight - scaledHeight) / 2;
+
             shapes.AddPicture(imageStream);
             var picture = shapes.Last();
 
-            // Set  image position and dimensions
-            picture.X = x + spacing;
-            picture.Y = imageY;
-            picture.Width = imageWidth;
-            picture.Height = imageHeight;
+            // Set image position and dimensions
+            picture.X = centeredX;
+            picture.Y = centeredY;
+            picture.Width = scaledWidth;
+            picture.Height = scaledHeight;
          }
          catch
          {
@@ -349,8 +383,8 @@ internal static class PptxReportHelper
             shapes.AddShape(
                 x: x + spacing,
                 y: imageY,
-                width: imageWidth,
-                height: imageHeight,
+                width: availableWidth,
+                height: availableHeight,
                 geometry: Geometry.Rectangle);
             var placeholderShape = shapes.Last();
             placeholderShape.Fill.SetNoFill();

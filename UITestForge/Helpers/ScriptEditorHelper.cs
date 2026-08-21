@@ -5,7 +5,8 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, exit, goto, checkpage.
+   /// Labels can be defined with a colon (e.g., "label:").
    /// </summary>
    internal static class ScriptEditorHelper
    {
@@ -19,6 +20,7 @@ namespace UITestForge.Helpers
       /// <param name="onOutputUpdate">Invoked after each step with the full accumulated log text.</param>
       /// <param name="onScreenshotCaptured">Invoked when a <c>screenshot</c> step succeeds, with the saved file path.</param>
       /// <param name="scriptFolder">The folder to use for saving PPTX files when no absolute path is provided.</param>
+      /// <param name="currentPageName">The current page name for checkpage command comparison.</param>
       /// <returns>The total number of steps executed and any unhandled exception.</returns>
       internal static async Task<(int StepCount, Exception? Error)> RunScriptAsync(
          string scriptText,
@@ -26,7 +28,8 @@ namespace UITestForge.Helpers
          Action<int, string> onStepStatus,
          Action<string> onOutputUpdate,
          Action<string> onScreenshotCaptured,
-         string? scriptFolder = null)
+         string? scriptFolder = null,
+         string? currentPageName = null)
       {
          var lines = scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
          var log = new System.Text.StringBuilder();
@@ -36,12 +39,28 @@ namespace UITestForge.Helpers
          string? firstScreenshot = null;
          string? lastScreenshot = null;
 
+         // Build label dictionary for goto support
+         var labels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+         for (int i = 0; i < lines.Length; i++)
+         {
+            var trimmed = lines[i].Trim();
+            if (trimmed.EndsWith(':') && !trimmed.Contains(' '))
+            {
+               var labelName = trimmed.TrimEnd(':');
+               labels[labelName] = i;
+            }
+         }
+
          try
          {
-            foreach (var rawLine in lines)
+            for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
             {
+               var rawLine = lines[lineIndex];
                var line = rawLine.Trim();
                if (line.Length == 0 || line.StartsWith('#')) continue;
+
+               // Skip label definitions (they're just markers)
+               if (line.EndsWith(':') && !line.Contains(' ')) continue;
 
                stepNum++;
                var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
@@ -96,6 +115,66 @@ namespace UITestForge.Helpers
                   {
                      await Task.Delay(seconds * 1000);
                      resultLine = $"    ✓ waited {seconds} second{(seconds != 1 ? "s" : "")}";
+                  }
+               }
+               else if (cmd == "exit")
+               {
+                  resultLine = "    ✓ script execution stopped";
+                  log.AppendLine(resultLine);
+                  onOutputUpdate(log.ToString());
+                  return (stepNum, null);
+               }
+               else if (cmd == "goto")
+               {
+                  if (string.IsNullOrWhiteSpace(rest))
+                  {
+                     resultLine = "    ✗ goto requires a label name";
+                  }
+                  else if (!labels.TryGetValue(rest.Trim(), out int targetLine))
+                  {
+                     resultLine = $"    ✗ label '{rest.Trim()}' not found";
+                  }
+                  else
+                  {
+                     resultLine = $"    ✓ jumping to {rest.Trim()}";
+                     log.AppendLine(resultLine);
+                     onOutputUpdate(log.ToString());
+                     lineIndex = targetLine; // Jump to label (loop will increment)
+                     continue;
+                  }
+               }
+               else if (cmd == "checkpage")
+               {
+                  // Expected format: checkpage <pageName> <label>
+                  var args = rest.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                  if (args.Length < 2)
+                  {
+                     resultLine = "    ✗ checkpage requires a page name and label (e.g., checkpage MainPage myLabel)";
+                  }
+                  else
+                  {
+                     var expectedPage = args[0].Trim();
+                     var targetLabel = args[1].Trim();
+
+                     if (string.Equals(currentPageName, expectedPage, StringComparison.OrdinalIgnoreCase))
+                     {
+                        if (!labels.TryGetValue(targetLabel, out int targetLine))
+                        {
+                           resultLine = $"    ✗ label '{targetLabel}' not found";
+                        }
+                        else
+                        {
+                           resultLine = $"    ✓ page matches '{expectedPage}', jumping to {targetLabel}";
+                           log.AppendLine(resultLine);
+                           onOutputUpdate(log.ToString());
+                           lineIndex = targetLine; // Jump to label
+                           continue;
+                        }
+                     }
+                     else
+                     {
+                        resultLine = $"    ○ page is '{currentPageName ?? "(null)"}', not '{expectedPage}' - skipping";
+                     }
                   }
                }
                else if (cmd == "create-pptx")
@@ -160,6 +239,12 @@ namespace UITestForge.Helpers
             "screenshot" => string.Empty, // Handled specially in RunScriptAsync
 
             "wait" => string.Empty, // Handled specially in RunScriptAsync
+
+            "exit" => string.Empty, // Handled specially in RunScriptAsync
+
+            "goto" => string.Empty, // Handled specially in RunScriptAsync
+
+            "checkpage" => string.Empty, // Handled specially in RunScriptAsync
 
             "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
 

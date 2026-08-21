@@ -8,6 +8,7 @@ https://mauidevflow.net/
 https://learn.microsoft.com/en-us/dotnet/maui/developer-tools/?view=net-maui-10.0
 https://github.com/dotnet/maui-labs/tree/main/src/Cli 
 https://learn.microsoft.com/en-us/dotnet/maui/developer-tools/cli/?view=net-maui-10.0
+https://dotnet.microsoft.com/en-us/live/community-standup
 
 
 <PackageReference Include="Microsoft.Maui.DevFlow.Agent" Version="0.1.0-preview.12.26368.2" />

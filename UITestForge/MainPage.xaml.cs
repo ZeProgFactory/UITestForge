@@ -120,6 +120,9 @@ public partial class MainPage : ContentPage
 
             ScriptEditor.Text = content;
             _viewModel.UpdateScriptStatus($"Loaded: {result.FileName}");
+
+            _viewModel.Config.LastScript = result.FullPath;
+            _viewModel.Save();
          }
       }
       catch (Exception ex)
@@ -210,7 +213,8 @@ public partial class MainPage : ContentPage
                 ScreenshotRefreshBtn.IsVisible = true;
                 _viewModel.LastScreenshotPath = path;
              },
-             scriptFolder: _viewModel.Config.ScriptFolder);
+             scriptFolder: _viewModel.Config.ScriptFolder,
+             currentPageName: _viewModel.PageName);
 
          _viewModel.UpdateScriptStatus(error is not null
              ? $"Script error: {error.Message}"
@@ -218,6 +222,8 @@ public partial class MainPage : ContentPage
       }
       finally
       {
+         _viewModel.ActionStatusText = "";
+
          _viewModel.SetBusy(false);
          ScriptRunBtn.IsEnabled = true;
          ScriptClearBtn.IsEnabled = true;

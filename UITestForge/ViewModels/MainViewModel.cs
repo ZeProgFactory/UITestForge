@@ -98,6 +98,9 @@ public partial class MainViewModel : ObservableObject
    public string DataFolder { get; set; } = "";
    public Params Config { get; set; } = new Params();
 
+   [ObservableProperty]
+   private string _pageName = "";
+
    // Constructor
    public MainViewModel()
    {
@@ -537,6 +540,15 @@ public partial class MainViewModel : ObservableObject
             else
             {
                ActionStatusText = "Tree loaded — 0 nodes";
+            }
+
+            if (TreeItems.Count>1 && TreeItems[0].DisplayType== "Window" )
+            {
+               PageName = TreeItems[1].DisplayType;
+            }
+            else
+            {
+               PageName = string.Empty;
             }
 
             TreeColumnVisible = true;
