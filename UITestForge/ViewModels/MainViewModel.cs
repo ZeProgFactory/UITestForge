@@ -29,7 +29,7 @@ public partial class MainViewModel : ObservableObject
    private TreeNodeItem? _selectedTreeNode;
 
    [ObservableProperty]
-   private string _statusText = "Idle — press Start to monitor";
+   private string _statusText = "Press refresh if picker is empty";
 
    [ObservableProperty]
    private string _actionStatusText = "Select an agent above";
@@ -200,6 +200,102 @@ public partial class MainViewModel : ObservableObject
          StartMonitoring();
       else
          StopMonitoring();
+   }
+
+   [RelayCommand]
+   private async Task RefreshAgentsAsync()
+   {
+      try
+      {
+         IsBusy = true;
+         StatusText = "Refreshing agents...";
+
+#if !ANDROID
+         await DevFlowCliHelper.EnsureBrokerStartedAsync();
+#endif
+
+         var agents = await DevFlowBrokerClient.FetchAgentsAsync(CancellationToken.None);
+
+         await MainThread.InvokeOnMainThreadAsync(() =>
+         {
+            var previousSelectedId = SelectedAgent?.Id;
+            var incoming = agents ?? [];
+            var selectionLost = false;
+            var collectionChanged = false;
+
+            _isRefreshing = true;
+            try
+            {
+               // Remove agents that are no longer present
+               for (int i = Agents.Count - 1; i >= 0; i--)
+               {
+                  if (!incoming.Any(a => a.Id == Agents[i].Id))
+                  {
+                     Agents.RemoveAt(i);
+                     collectionChanged = true;
+                  }
+               }
+
+               // Update existing agents and append new ones
+               for (int i = 0; i < incoming.Count; i++)
+               {
+                  var fresh = incoming[i];
+                  var existing = Agents.FirstOrDefault(a => a.Id == fresh.Id);
+                  if (existing is not null)
+                  {
+                     existing.Project = fresh.Project;
+                     existing.Tfm = fresh.Tfm;
+                     existing.Platform = fresh.Platform;
+                     existing.AppName = fresh.AppName;
+                     existing.Port = fresh.Port;
+                     existing.Version = fresh.Version;
+                     existing.SessionId = fresh.SessionId;
+                     existing.ConnectedAt = fresh.ConnectedAt;
+                  }
+                  else
+                  {
+                     Agents.Insert(i, fresh);
+                     collectionChanged = true;
+                     if (fresh.Id == previousSelectedId)
+                        selectionLost = true;
+                  }
+               }
+            }
+            finally
+            {
+               _isRefreshing = false;
+            }
+
+            if (collectionChanged)
+            {
+               AgentsCollectionChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            StatusText = Agents.Count > 0
+                    ? $"Manual refresh: {DateTime.Now:HH:mm:ss}  —  {Agents.Count} agent(s)"
+                    : $"Manual refresh: {DateTime.Now:HH:mm:ss}  —  No agents connected";
+
+            if (previousSelectedId is not null &&
+                    (collectionChanged || SelectedAgent is null))
+               selectionLost = true;
+
+            if (selectionLost)
+            {
+               var restored = Agents.FirstOrDefault(a => a.Id == previousSelectedId);
+               if (restored is not null)
+                  SelectedAgent = restored;
+            }
+         });
+      }
+      catch (Exception ex)
+      {
+         await MainThread.InvokeOnMainThreadAsync(() =>
+             StatusText = $"Refresh error: {ex.Message}");
+      }
+      finally
+      {
+         IsBusy = false;
+      }
    }
 
    private void StartMonitoring()

@@ -25,11 +25,15 @@
                     SelectedIndexChanged="OnAgentSelectionChanged" />
          </VerticalStackLayout>
 
-         <Button x:Name="MonitorBtn" Grid.Column="2" Margin="0,20,0,20"
-                  Text="{Binding MonitorButtonText}"
-                  AutomationId="MonitorBtn"
-                  Command="{Binding ToggleMonitoringCommand}"
-                  WidthRequest="80" />
+         <Button x:Name="RefreshAgentsBtn" Grid.Column="2" Margin="0,20,0,20"
+                       Text="↻"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#FFFFFF, Dark=#000000}"
+                 AutomationId="RefreshAgentsBtn"
+                 Command="{Binding RefreshAgentsCommand}"
+                 ToolTipProperties.Text="Manually refresh the agent list"
+                 WidthRequest="100" />
 
          <!-- Col 3: Selected agent details -->
          <Border x:Name="SelectedAgentFrame" Grid.Column="3" Margin="0,10,10,0"
