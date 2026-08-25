@@ -29,7 +29,10 @@ public partial class MainPage : ContentPage
       {
          _viewModel.Load();
 
-         ScriptEditor.Text = System.IO.File.ReadAllText(_viewModel.Config.LastScript);
+         if( System.IO.File.Exists(_viewModel.Config.LastScript))
+         {
+            ScriptEditor.Text = System.IO.File.ReadAllText(_viewModel.Config.LastScript);
+         }
       };
    }
 

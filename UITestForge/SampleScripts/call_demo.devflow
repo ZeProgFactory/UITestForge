@@ -1,0 +1,15 @@
+# Demo script showing call command
+# This script demonstrates how to call another script file
+
+# Take initial screenshot
+screenshot initial.png
+
+# Call a sub-script to perform some actions
+call demo_with_report.devflow
+
+# Continue with more actions after the called script
+wait 1
+screenshot final.png
+
+# The call command executes the specified script file
+# and then continues with the next line of the current script

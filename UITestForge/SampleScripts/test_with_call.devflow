@@ -1,0 +1,17 @@
+# Test script that uses call to reuse login logic
+# This demonstrates how to modularize test scripts
+
+# Take a screenshot before starting
+screenshot test_start.png
+
+# Call the common login script
+call common_login.devflow
+
+# Now perform test-specific actions
+tap MainMenuBtn
+wait 1
+tap SettingsBtn
+screenshot settings_page.png
+
+# Generate report
+create-pptx test_with_modular_login.pptx "Modular Login Test"

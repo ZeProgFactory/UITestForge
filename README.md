@@ -37,6 +37,11 @@ maui devflow ui tree --depth 3 --fields "id,type,text,automationId"
 maui devflow ui tap --automationId "CounterBtn"
 
 
+https://github.com/dotnet/maui-labs/issues/408
+"C:\Program Files (x86)\Android\android-sdk\platform-tools\adb.exe"  reverse --remove-all
+"C:\Program Files (x86)\Android\android-sdk\platform-tools\adb.exe"  forward  --remove-all
+maui devflow init
+
 
 # Login flow
 tap UsernameEntry
@@ -60,6 +65,7 @@ screenshot
   - `scroll down [px]` — scroll down by px (default 300)  
   - `scroll up [px]` — scroll up by px (default 300)  
   - `scroll <automationId>` — scroll element into view  
+  - `call <script-filename>` — executes the script file before resuming with the next line of the current script
   - `# comment` / blank lines skipped  
 - CLI commands follow existing patterns: `ui tap --automationId "id"`, `ui fill --automationId "id" --text "value"`, `ui clear --automationId "id"`, `ui focus --automationId "id"`, `ui screenshot --output "path" --overwrite`, `ui navigate <route>`, `ui scroll --dy <px>`, `ui scroll --element "id"`
 - Snippet buttons append template text to the Editor

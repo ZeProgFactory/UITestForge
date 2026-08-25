@@ -5,7 +5,7 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, exit, goto, checkpage.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, exit, goto, checkpage, call.
    /// Labels can be defined with a colon (e.g., "label:").
    /// </summary>
    internal static class ScriptEditorHelper
@@ -185,6 +185,66 @@ namespace UITestForge.Helpers
                {
                   resultLine = await HandleAddReportPageAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot);
                }
+               else if (cmd == "call")
+               {
+                  if (string.IsNullOrWhiteSpace(rest))
+                  {
+                     resultLine = "    ✗ call requires a script filename";
+                  }
+                  else
+                  {
+                     var scriptPath = rest.Trim('"');
+
+                     // If not absolute path, try to resolve relative to scriptFolder or current directory
+                     if (!Path.IsPathRooted(scriptPath))
+                     {
+                        if (!string.IsNullOrWhiteSpace(scriptFolder))
+                        {
+                           scriptPath = Path.Combine(scriptFolder, scriptPath);
+                        }
+                     }
+
+                     if (!File.Exists(scriptPath))
+                     {
+                        resultLine = $"    ✗ script file not found: {scriptPath}";
+                     }
+                     else
+                     {
+                        try
+                        {
+                           var calledScript = await File.ReadAllTextAsync(scriptPath);
+                           var calledScriptFolder = Path.GetDirectoryName(scriptPath);
+
+                           log.AppendLine($"    → calling script: {scriptPath}");
+                           onOutputUpdate(log.ToString());
+
+                           var (calledSteps, calledError) = await RunScriptAsync(
+                              calledScript,
+                              agent,
+                              onStepStatus,
+                              onOutputUpdate,
+                              onScreenshotCaptured,
+                              calledScriptFolder,
+                              currentPageName);
+
+                           stepNum += calledSteps;
+
+                           if (calledError != null)
+                           {
+                              resultLine = $"    ✗ called script failed: {calledError.Message}";
+                           }
+                           else
+                           {
+                              resultLine = $"    ✓ called script completed ({calledSteps} steps)";
+                           }
+                        }
+                        catch (Exception ex)
+                        {
+                           resultLine = $"    ✗ failed to execute called script: {ex.Message}";
+                        }
+                     }
+                  }
+               }
                else
                {
                   var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
@@ -249,6 +309,8 @@ namespace UITestForge.Helpers
             "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
 
             "add-report-page" => string.Empty, // Handled specially in RunScriptAsync
+
+            "call" => string.Empty, // Handled specially in RunScriptAsync
 
             _ => throw new ArgumentException($"Unknown command: {cmd}")
          };

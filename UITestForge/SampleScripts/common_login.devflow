@@ -1,0 +1,10 @@
+# Common login actions
+# This script can be called from other scripts to perform login
+
+tap UsernameEntry
+fill UsernameEntry admin@test.com
+tap PasswordEntry
+fill PasswordEntry secret123
+tap LoginBtn
+wait 2
+screenshot after_login.png
