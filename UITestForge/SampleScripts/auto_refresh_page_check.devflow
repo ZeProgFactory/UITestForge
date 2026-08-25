@@ -1,0 +1,40 @@
+# Demo showing automatic TreeView refresh in checkpage/checknpage commands
+# This script demonstrates that page checks always get fresh page information
+
+screenshot start.png
+
+# Navigate to a different page
+tap NavigateToSettingsBtn
+wait 2
+
+# The checkpage command will refresh the tree and get the current page
+# Even though we navigated, it will detect we're now on SettingsPage
+checkpage SettingsPage onSettings
+
+# This should not execute because we should have jumped to onSettings
+tap SomeOtherButton
+screenshot not_executed.png
+exit
+
+onSettings:
+# We are on settings page (detected via auto-refresh)
+screenshot confirmed_on_settings.png
+fill SettingEntry NewValue
+
+# Navigate back
+tap BackButton
+wait 2
+
+# Again, checknpage will refresh the tree to get current state
+# If we're not on the settings page anymore (we navigated back), jump to afterSettings
+checknpage SettingsPage afterSettings
+
+# This should not execute because we navigated back
+tap AnotherSettingsButton
+exit
+
+afterSettings:
+# We successfully navigated away from settings (detected via auto-refresh)
+screenshot back_to_main.png
+
+create-pptx auto_refresh_demo.pptx "Auto-Refresh Page Check Demo"

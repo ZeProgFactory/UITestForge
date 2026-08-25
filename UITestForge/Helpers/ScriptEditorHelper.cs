@@ -5,7 +5,7 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, exit, goto, checkpage, call.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, exit, goto, checkpage, checknpage, call.
    /// Labels can be defined with a colon (e.g., "label:").
    /// </summary>
    internal static class ScriptEditorHelper
@@ -19,6 +19,7 @@ namespace UITestForge.Helpers
       /// <param name="onStepStatus">Invoked at the start of each step with <c>(stepNumber, commandName)</c>.</param>
       /// <param name="onOutputUpdate">Invoked after each step with the full accumulated log text.</param>
       /// <param name="onScreenshotCaptured">Invoked when a <c>screenshot</c> step succeeds, with the saved file path.</param>
+      /// <param name="onGetCurrentPage">Optional callback to refresh and get the current page name. If null, uses <paramref name="currentPageName"/>.</param>
       /// <param name="scriptFolder">The folder to use for saving PPTX files when no absolute path is provided.</param>
       /// <param name="currentPageName">The current page name for checkpage command comparison.</param>
       /// <returns>The total number of steps executed and any unhandled exception.</returns>
@@ -28,6 +29,7 @@ namespace UITestForge.Helpers
          Action<int, string> onStepStatus,
          Action<string> onOutputUpdate,
          Action<string> onScreenshotCaptured,
+         Func<Task<string?>>? onGetCurrentPage = null,
          string? scriptFolder = null,
          string? currentPageName = null)
       {
@@ -156,7 +158,24 @@ namespace UITestForge.Helpers
                      var expectedPage = args[0].Trim();
                      var targetLabel = args[1].Trim();
 
-                     if (string.Equals(currentPageName, expectedPage, StringComparison.OrdinalIgnoreCase))
+                     // Refresh TreeView to get current page name
+                     var actualPageName = currentPageName;
+                     if (onGetCurrentPage != null)
+                     {
+                        try
+                        {
+                           actualPageName = await onGetCurrentPage();
+                        }
+                        catch (Exception ex)
+                        {
+                           resultLine = $"    ✗ failed to refresh page name: {ex.Message}";
+                           log.AppendLine(resultLine);
+                           onOutputUpdate(log.ToString());
+                           continue;
+                        }
+                     }
+
+                     if (string.Equals(actualPageName, expectedPage, StringComparison.OrdinalIgnoreCase))
                      {
                         if (!labels.TryGetValue(targetLabel, out int targetLine))
                         {
@@ -173,7 +192,58 @@ namespace UITestForge.Helpers
                      }
                      else
                      {
-                        resultLine = $"    ○ page is '{currentPageName ?? "(null)"}', not '{expectedPage}' - skipping";
+                        resultLine = $"    ○ page is '{actualPageName ?? "(null)"}', not '{expectedPage}' - skipping";
+                     }
+                  }
+               }
+               else if (cmd == "checknpage")
+               {
+                  // Expected format: checknpage <pageName> <label>
+                  var args = rest.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                  if (args.Length < 2)
+                  {
+                     resultLine = "    ✗ checknpage requires a page name and label (e.g., checknpage MainPage myLabel)";
+                  }
+                  else
+                  {
+                     var expectedPage = args[0].Trim();
+                     var targetLabel = args[1].Trim();
+
+                     // Refresh TreeView to get current page name
+                     var actualPageName = currentPageName;
+                     if (onGetCurrentPage != null)
+                     {
+                        try
+                        {
+                           actualPageName = await onGetCurrentPage();
+                        }
+                        catch (Exception ex)
+                        {
+                           resultLine = $"    ✗ failed to refresh page name: {ex.Message}";
+                           log.AppendLine(resultLine);
+                           onOutputUpdate(log.ToString());
+                           continue;
+                        }
+                     }
+
+                     if (!string.Equals(actualPageName, expectedPage, StringComparison.OrdinalIgnoreCase))
+                     {
+                        if (!labels.TryGetValue(targetLabel, out int targetLine))
+                        {
+                           resultLine = $"    ✗ label '{targetLabel}' not found";
+                        }
+                        else
+                        {
+                           resultLine = $"    ✓ page does not match '{expectedPage}', jumping to {targetLabel}";
+                           log.AppendLine(resultLine);
+                           onOutputUpdate(log.ToString());
+                           lineIndex = targetLine; // Jump to label
+                           continue;
+                        }
+                     }
+                     else
+                     {
+                        resultLine = $"    ○ page is '{actualPageName}', matches '{expectedPage}' - skipping";
                      }
                   }
                }
@@ -224,6 +294,7 @@ namespace UITestForge.Helpers
                               onStepStatus,
                               onOutputUpdate,
                               onScreenshotCaptured,
+                              onGetCurrentPage,
                               calledScriptFolder,
                               currentPageName);
 
@@ -305,6 +376,8 @@ namespace UITestForge.Helpers
             "goto" => string.Empty, // Handled specially in RunScriptAsync
 
             "checkpage" => string.Empty, // Handled specially in RunScriptAsync
+
+            "checknpage" => string.Empty, // Handled specially in RunScriptAsync
 
             "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
 

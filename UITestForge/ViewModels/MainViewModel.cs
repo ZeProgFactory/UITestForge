@@ -573,7 +573,62 @@ public partial class MainViewModel : ObservableObject
 #endif
    }
 
-   // ── Tap Counter Button ──────────────────────────────────────────────────────
+   /// <summary>
+   /// Refreshes the visual tree and returns the current page name.
+   /// This is used by script commands like checkpage and checknpage.
+   /// </summary>
+   internal async Task<string?> RefreshAndGetPageNameAsync()
+   {
+#if ANDROID
+      return null;
+#else
+      if (SelectedAgent is null) return null;
+
+      try
+      {
+         var forwardError = await DevFlowCliHelper.EnsureAgentPortForwardedAsync(SelectedAgent);
+         if (forwardError is not null)
+            return PageName;
+
+         var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
+             "ui tree",
+             SelectedAgent);
+
+         if (exitCode == 0 && stdout.Length > 0)
+         {
+            var roots = JsonSerializer.Deserialize(
+                stdout, DevFlowJsonContext.Default.ListTreeNode);
+
+            TreeItems.Clear();
+            SelectedTreeNode = null;
+            if (roots is { Count: > 0 })
+            {
+               foreach (var root in roots)
+                  FlattenTree(root, depth: 0, expandDepth: 2);
+            }
+
+            if (TreeItems.Count > 1 && TreeItems[0].DisplayType == "Window")
+            {
+               PageName = TreeItems[1].DisplayType;
+            }
+            else
+            {
+               PageName = string.Empty;
+            }
+
+            return PageName;
+         }
+
+         return PageName;
+      }
+      catch (Exception)
+      {
+         return PageName;
+      }
+#endif
+   }
+
+   // ── Tap Counter Button ──────────────────────────────────────────────────
 
    [RelayCommand]
    private async Task TapCounterButtonAsync()

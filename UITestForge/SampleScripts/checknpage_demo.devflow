@@ -1,0 +1,30 @@
+# Demo script showing checknpage command
+# This script demonstrates conditional navigation based on the current page
+
+# Take initial screenshot
+screenshot start.png
+
+# Check if we're NOT on the login page
+# If we're not on the login page, skip the login section
+checknpage LoginPage afterLogin
+
+# We're on the login page, so perform login
+loginSection:
+tap UsernameEntry
+fill UsernameEntry admin@test.com
+tap PasswordEntry
+fill PasswordEntry secret123
+tap LoginBtn
+wait 2
+
+# Continue after login (executed whether we logged in or not)
+afterLogin:
+screenshot after_login_check.png
+
+# Navigate to main content
+tap MainMenuBtn
+wait 1
+screenshot main_menu.png
+
+# Generate report
+create-pptx checknpage_demo.pptx "Conditional Navigation Demo"

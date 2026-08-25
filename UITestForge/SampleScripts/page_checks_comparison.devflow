@@ -1,0 +1,34 @@
+# Demo comparing checkpage and checknpage commands
+# This shows how to handle different starting states
+
+screenshot initial_state.png
+
+# Example 1: Using checkpage - if we ARE on MainPage, do something
+checkpage MainPage alreadyOnMain
+
+# We're NOT on MainPage, navigate there
+tap NavigateToMainBtn
+wait 1
+goto afterMainCheck
+
+# We ARE on MainPage already
+alreadyOnMain:
+screenshot already_on_main.png
+
+afterMainCheck:
+screenshot main_page.png
+
+# Example 2: Using checknpage - if we're NOT on Settings, navigate there
+checknpage SettingsPage navigateToSettings
+# We're already on settings, just continue
+goto afterSettingsCheck
+
+navigateToSettings:
+tap SettingsBtn
+wait 1
+
+afterSettingsCheck:
+screenshot settings_page.png
+
+# Generate report
+create-pptx page_checks_demo.pptx "Page Check Comparison"

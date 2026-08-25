@@ -66,6 +66,11 @@ screenshot
   - `scroll up [px]` — scroll up by px (default 300)  
   - `scroll <automationId>` — scroll element into view  
   - `call <script-filename>` — executes the script file before resuming with the next line of the current script
+  - `checkpage <pageName> <label>` — if current page is pageName, goto label
+  - `checknpage <pageName> <label>` — if current page isn't pageName, goto label
+  - `goto <label>` — jump to a label in the script
+  - `wait <seconds>` — pause execution for the specified number of seconds
+  - `exit` — stop script execution
   - `# comment` / blank lines skipped  
 - CLI commands follow existing patterns: `ui tap --automationId "id"`, `ui fill --automationId "id" --text "value"`, `ui clear --automationId "id"`, `ui focus --automationId "id"`, `ui screenshot --output "path" --overwrite`, `ui navigate <route>`, `ui scroll --dy <px>`, `ui scroll --element "id"`
 - Snippet buttons append template text to the Editor

@@ -40,6 +40,10 @@
                         <Span Text="&lt;pageName&gt; &lt;label&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
+                        <Span Text="checknpage " FontFamily="Consolas"/>
+                        <Span Text="&lt;pageName&gt; &lt;label&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
                         <Span Text="clear " FontFamily="Consolas"/>
                         <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
@@ -90,6 +94,8 @@
                         <Span Text="&#x0a;"/>
                         <Span Text="checkpage MainPage onMain" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
+                        <Span Text="checknpage LoginPage skipError" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
                         <Span Text="tap MyButton" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
                         <Span Text="exit" FontFamily="Consolas"/>
@@ -99,6 +105,10 @@
                         <Span Text="fill MyEntry Hello" FontFamily="Consolas"/>
                         <Span Text="&#x0a;"/>
                         <Span Text="screenshot" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="skipError:" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="tap LoginButton" FontFamily="Consolas"/>
                      </FormattedString>
                   </Label.FormattedText>
                </Label>

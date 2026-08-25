@@ -216,6 +216,7 @@ public partial class MainPage : ContentPage
                 ScreenshotRefreshBtn.IsVisible = true;
                 _viewModel.LastScreenshotPath = path;
              },
+             onGetCurrentPage: async () => await _viewModel.RefreshAndGetPageNameAsync(),
              scriptFolder: _viewModel.Config.ScriptFolder,
              currentPageName: _viewModel.PageName);
 
