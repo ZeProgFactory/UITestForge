@@ -233,9 +233,10 @@ internal static class PptxReportHelper
       const int titleHeight = 60;
       const int columnSpacing = 15;
 
-      // Calculate column width (3 equal columns)
+      // Calculate column widths (image columns 10% smaller, log column 20% larger)
       int availableWidth = slideWidth - (2 * margin) - (2 * columnSpacing);
-      int columnWidth = availableWidth / 3;
+      int imageColumnWidth = (int)(availableWidth * 0.2667); // 26.67% (10% smaller than 33.33%)
+      int logColumnWidth = (int)(availableWidth * 0.4667);   // 46.67% (20% larger than 33.33%)
 
       // Content area (below title)
       int contentY = margin + titleHeight + 10;
@@ -260,17 +261,17 @@ internal static class PptxReportHelper
       titleShape.TextBox.Paragraphs.First().SetFontSize(28);
       titleShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
 
-      // Column 1: Before Image (Left)
+      // Column 1: Before Image (Left) - 10% smaller
       int col1X = margin;
-      AddColumnWithImage(shapes, col1X, contentY, columnWidth, contentHeight, "Before", beforeImagePath);
+      AddColumnWithImage(shapes, col1X, contentY, imageColumnWidth, contentHeight, "Before", beforeImagePath);
 
-      // Column 2: Execution Log (Center)
-      int col2X = col1X + columnWidth + columnSpacing;
-      AddColumnWithText(shapes, col2X, contentY, columnWidth, contentHeight, "Execution Log", executionLog);
+      // Column 2: Execution Log (Center) - 20% larger
+      int col2X = col1X + imageColumnWidth + columnSpacing;
+      AddColumnWithText(shapes, col2X, contentY, logColumnWidth, contentHeight, "Execution Log", executionLog);
 
-      // Column 3: After Image (Right)
-      int col3X = col2X + columnWidth + columnSpacing;
-      AddColumnWithImage(shapes, col3X, contentY, columnWidth, contentHeight, "After", afterImagePath);
+      // Column 3: After Image (Right) - 10% smaller
+      int col3X = col2X + logColumnWidth + columnSpacing;
+      AddColumnWithImage(shapes, col3X, contentY, imageColumnWidth, contentHeight, "After", afterImagePath);
 
       // Create notes if they don't exist
       newSlide.AddNotes(scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));

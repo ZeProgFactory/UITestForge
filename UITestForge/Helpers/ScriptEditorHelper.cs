@@ -321,7 +321,7 @@ namespace UITestForge.Helpers
                   var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
                   var detail = stdout.Trim().Length > 0 ? stdout.Trim() : stderr.Trim();
                   resultLine = exitCode == 0
-                     ? $"    \u2713 ok{(detail.Length > 0 ? " \u2014 " + detail : "")}"
+                     ? $"    \u2713 ok"
                      : $"    \u2717 {(detail.Length > 0 ? detail : $"exit {exitCode}")}";
                }
 

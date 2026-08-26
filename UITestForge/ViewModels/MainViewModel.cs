@@ -726,36 +726,36 @@ public partial class MainViewModel : ObservableObject
 
    // ── Tap Counter Button ──────────────────────────────────────────────────
 
-   [RelayCommand]
-   private async Task TapCounterButtonAsync()
-   {
-#if ANDROID
-        ActionStatusText = "Tap requires running UITestForge on Windows.";
-        return;
-#else
-      if (SelectedAgent is null) return;
+//   [RelayCommand]
+//   private async Task TapCounterButtonAsync()
+//   {
+//#if ANDROID
+//        ActionStatusText = "Tap requires running UITestForge on Windows.";
+//        return;
+//#else
+//      if (SelectedAgent is null) return;
 
-      SetBusy(true, "Tapping CounterBtn…");
-      try
-      {
-         var (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
-             "ui tap --automationId \"CounterBtn\"",
-             SelectedAgent);
+//      SetBusy(true, "Tapping CounterBtn…");
+//      try
+//      {
+//         var (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
+//             "ui tap --automationId \"CounterBtn\"",
+//             SelectedAgent);
 
-         ActionStatusText = exitCode == 0
-             ? "CounterBtn tapped ✓"
-             : $"Tap failed: {stderr.Trim()}";
-      }
-      catch (Exception ex)
-      {
-         ActionStatusText = $"Error: {ex.Message}";
-      }
-      finally
-      {
-         SetBusy(false);
-      }
-#endif
-   }
+//         ActionStatusText = exitCode == 0
+//             ? "CounterBtn tapped ✓"
+//             : $"Tap failed: {stderr.Trim()}";
+//      }
+//      catch (Exception ex)
+//      {
+//         ActionStatusText = $"Error: {ex.Message}";
+//      }
+//      finally
+//      {
+//         SetBusy(false);
+//      }
+//#endif
+//   }
 
    // ── Tree Operations ─────────────────────────────────────────────────────────
 
