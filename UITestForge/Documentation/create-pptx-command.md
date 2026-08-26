@@ -103,4 +103,4 @@ If the PowerPoint creation fails, the command outputs an error message:
 ```
 
 ## Sample Script
-See `UITestForge/SampleScripts/demo_with_report.devflow` for a complete example.
+See `UITestForge/SampleScripts/demo_with_report.df` for a complete example.
