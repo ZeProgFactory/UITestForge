@@ -482,14 +482,24 @@ internal static class PptxReportHelper
       textShape.TextBox.SetText(contentText ?? "No log available");
       textShape.TextBox.VerticalAlignment = TextVerticalAlignment.Top;
 
-      foreach (var p in textShape.TextBox.Paragraphs)
+      foreach (var paragraph in textShape.TextBox.Paragraphs)
       {
-         p.HorizontalAlignment = TextHorizontalAlignment.Left;
-         p.SetFontColor("000000");
-         p.SetFontSize(10);
+         paragraph.HorizontalAlignment = TextHorizontalAlignment.Left;
+         paragraph.SetFontColor("000000");
+         paragraph.SetFontSize(10);
 
-         // Set font family to monospace for better log readability
-         p.Portions.First().Font.LatinName = "Consolas";
+         foreach(var portion in paragraph.Portions)
+         {
+            // Set font family to monospace for better log readability
+            portion.Font.LatinName = "Consolas";
+
+            if(portion.Text.Trim().StartsWith("✗", StringComparison.OrdinalIgnoreCase) )
+            {
+               portion.Font.IsBold = true;
+               portion.TextHighlightColor = new ShapeCrawler.Color("FF0000"); // Red for errors
+            }
+         }
+
       }
    }
 

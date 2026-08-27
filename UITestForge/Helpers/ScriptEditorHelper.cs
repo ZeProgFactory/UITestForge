@@ -1,4 +1,5 @@
-﻿using UITestForge;
+﻿using System.Text.Json;
+using UITestForge;
 
 namespace UITestForge.Helpers
 {
@@ -319,10 +320,12 @@ namespace UITestForge.Helpers
                else
                {
                   var (exitCode, stdout, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
-                  var detail = stdout.Trim().Length > 0 ? stdout.Trim() : stderr.Trim();
+                  var rawDetail = stdout.Trim().Length > 0 ? stdout.Trim() : stderr.Trim();
+                  var detail = ExtractFriendlyDetail(rawDetail);
+
                   resultLine = exitCode == 0
                      ? $"    \u2713 ok"
-                     : $"    \u2717 {(detail.Length > 0 ? detail : $"exit {exitCode}")}";
+                     : $"    \u2717 '{cmd}' failed{(detail.Length > 0 ? $": {detail}" : $" (exit code {exitCode})")}";
                }
 
                log.AppendLine(resultLine);
@@ -344,6 +347,40 @@ namespace UITestForge.Helpers
       /// Translates a script command token and its arguments into a devflow CLI argument string.
       /// </summary>
       /// <exception cref="ArgumentException">Thrown when the command is unknown or arguments are missing.</exception>
+      /// <summary>
+      /// Attempts to deserialize <paramref name="rawDetail"/> as JSON (the <c>maui devflow</c> CLI
+      /// commonly emits structured error output, e.g. <c>{"error":"..."}</c> or <c>{"message":"..."}</c>)
+      /// and extracts a human-readable message. Falls back to the raw text if it is not JSON or
+      /// no known message property is found.
+      /// </summary>
+      private static string ExtractFriendlyDetail(string rawDetail)
+      {
+         if (string.IsNullOrWhiteSpace(rawDetail)) return rawDetail;
+
+         try
+         {
+            using var doc = JsonDocument.Parse(rawDetail);
+            var root = doc.RootElement;
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+               foreach (var propertyName in new[] { "error", "message", "Error", "Message", "detail", "Detail" })
+               {
+                  if (root.TryGetProperty(propertyName, out var prop) && prop.ValueKind == JsonValueKind.String)
+                  {
+                     var value = prop.GetString();
+                     if (!string.IsNullOrWhiteSpace(value)) return value;
+                  }
+               }
+            }
+         }
+         catch (JsonException)
+         {
+            // Not JSON - fall through and use the raw text as-is.
+         }
+
+         return rawDetail;
+      }
+
       internal static string BuildCliArgs(string cmd, string rest)
          => cmd switch
          {

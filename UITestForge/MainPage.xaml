@@ -409,15 +409,20 @@
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
 
-                  <Editor x:Name="ScriptOutputLabel"
-                        FontFamily="Courier New"
-                        FontSize="11"
-                        IsSpellCheckEnabled="False"
-                        IsReadOnly="True"
-                        Margin="6,4"
-                        Text="{Binding ScriptOutputText}"
-                        Placeholder="(output will appear here)" />
-               </Border>
+                     <ScrollView Orientation="Both">
+                        <Editor x:Name="ScriptOutputLabel"
+                              FontFamily="Courier New"
+                              FontSize="11"
+                              IsSpellCheckEnabled="False"
+                              IsReadOnly="True"
+                              Margin="6,4"
+                              HorizontalOptions="Start"
+                              VerticalOptions="Start"
+                              AutoSize="TextChanges"
+                              Text="{Binding ScriptOutputText}"
+                              Placeholder="(output will appear here)" />
+                     </ScrollView>
+                  </Border>
 
             </Grid>
 

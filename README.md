@@ -33,11 +33,24 @@ UITestForge is a cross-platform [.NET MAUI](https://learn.microsoft.com/dotnet/m
 
 UITestForge talks to your target app through the DevFlow broker/agent, then drives it using the same commands available from the CLI (`ui tap`, `ui fill`, `ui navigate`, etc.). Scripts in the editor are just a friendlier, file-based way to sequence those same commands.
 
+<p align="center">
+Human</br>
+↓</br>
+UITestForge UI</br>
+↓</br>
+Automation / Script Layer</br>
+↓</br>
+DevFlow</br>
+↓</br>
+Running MAUI Application</br>
+<P>
+&nbsp;
+
 ## Getting Started
 
 ### 1. Add DevFlow to your MAUI app
 
-**`.csproj`**
+**Project file `.csproj`**
 ```xml
 <PackageReference Include="Microsoft.Maui.DevFlow.Agent" Version="0.1.0-preview.12.26368.2" />
 ```
