@@ -27,8 +27,11 @@ UITestForge is a cross-platform [.NET MAUI](https://learn.microsoft.com/dotnet/m
   - [`scroll down|up [px]`](#scroll-downup-px)
   - [`scroll <automationId>`](#scroll-automationid)
   - [`call <script-filename>`](#call-script-filename)
+  - [`print <text>`](#print-text)
   - [`checkpage <pageName> [label]`](#checkpage-pagename-label)
   - [`checknpage <pageName> [label]`](#checknpage-pagename-label)
+  - [`isvisible <automationId> [label]`](#isvisible-automationid-label)
+  - [`isnvisible <automationId> [label]`](#isnvisible-automationid-label)
   - [`goto <label>`](#goto-label)
   - [`wait <seconds>`](#wait-seconds)
   - [`create-pptx [filename] [title]`](#create-pptx-filename-title)
@@ -200,6 +203,12 @@ Executes another script file, then resumes with the next line of the current scr
 call common_login.df
 ```
 
+### `print <text>`
+Writes a message to the execution log. Useful for adding notes or debugging context to a script run without performing any UI action.
+```
+print Starting login flow
+```
+
 ### `checkpage <pageName> [label]`
 If the app's current page matches `pageName`, jumps to `label`. If `label` is omitted, this just checks and records the page (no branching) — useful when you only want the page to show up in the `addsummary` report.
 ```
@@ -212,6 +221,20 @@ If the app's current page does **not** match `pageName`, jumps to `label`. If `l
 ```
 checknpage SettingsPage afterSettings
 checknpage SettingsPage
+```
+
+### `isvisible <automationId> [label]`
+If the element identified by `automationId` is currently visible, jumps to `label`. If `label` is omitted, this just checks the element's visibility (no branching). An element that cannot be found is treated as not visible.
+```
+isvisible SaveBtn onSaveVisible
+isvisible SaveBtn
+```
+
+### `isnvisible <automationId> [label]`
+If the element identified by `automationId` is **not** currently visible (or cannot be found), jumps to `label`. If `label` is omitted, this just checks the element's visibility (no branching).
+```
+isnvisible ErrorBanner onNoError
+isnvisible ErrorBanner
 ```
 
 ### `goto <label>`
@@ -242,7 +265,7 @@ exit
 ```
 
 ### Labels
-A label is a line consisting only of a name followed by a colon. Used as a target for `goto`, `checkpage`, and `checknpage`.
+A label is a line consisting only of a name followed by a colon. Used as a target for `goto`, `checkpage`, `checknpage`, `isvisible`, and `isnvisible`.
 ```
 retryLogin:
 tap LoginBtn

@@ -194,15 +194,6 @@ public partial class MainViewModel : ObservableObject
    // ── Monitor Commands ────────────────────────────────────────────────────────
 
    [RelayCommand]
-   private void ToggleMonitoring()
-   {
-      if (_cts is null)
-         StartMonitoring();
-      else
-         StopMonitoring();
-   }
-
-   [RelayCommand]
    private async Task RefreshAgentsAsync()
    {
       try
@@ -295,127 +286,6 @@ public partial class MainViewModel : ObservableObject
       finally
       {
          IsBusy = false;
-      }
-   }
-
-   private void StartMonitoring()
-   {
-      _cts = new CancellationTokenSource();
-      MonitorButtonText = "Stop";
-      StatusText = "Connecting to broker…";
-      IsMonitoring = true;
-      _ = MonitorDevFlowAppAsync(_cts.Token);
-   }
-
-   private void StopMonitoring()
-   {
-      _cts?.Cancel();
-      _cts = null;
-      MonitorButtonText = "Start";
-      StatusText = "Monitoring stopped.";
-      IsMonitoring = false;
-   }
-
-   private async Task MonitorDevFlowAppAsync(CancellationToken ct)
-   {
-#if !ANDROID
-      await DevFlowCliHelper.EnsureBrokerStartedAsync();
-#endif
-      while (!ct.IsCancellationRequested)
-      {
-         try
-         {
-            var agents = await DevFlowBrokerClient.FetchAgentsAsync(ct);
-
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-               var previousSelectedId = SelectedAgent?.Id;
-               var incoming = agents ?? [];
-               var selectionLost = false;
-               var collectionChanged = false;
-
-               _isRefreshing = true;
-               try
-               {
-                  // Remove agents that are no longer present
-                  for (int i = Agents.Count - 1; i >= 0; i--)
-                  {
-                     if (!incoming.Any(a => a.Id == Agents[i].Id))
-                     {
-                        Agents.RemoveAt(i);
-                        collectionChanged = true;
-                     }
-                  }
-
-                  // Update existing agents and append new ones
-                  for (int i = 0; i < incoming.Count; i++)
-                  {
-                     var fresh = incoming[i];
-                     var existing = Agents.FirstOrDefault(a => a.Id == fresh.Id);
-                     if (existing is not null)
-                     {
-                        existing.Project = fresh.Project;
-                        existing.Tfm = fresh.Tfm;
-                        existing.Platform = fresh.Platform;
-                        existing.AppName = fresh.AppName;
-                        existing.Port = fresh.Port;
-                        existing.Version = fresh.Version;
-                        existing.SessionId = fresh.SessionId;
-                        existing.ConnectedAt = fresh.ConnectedAt;
-                     }
-                     else
-                     {
-                        Agents.Insert(i, fresh);
-                        collectionChanged = true;
-                        if (fresh.Id == previousSelectedId)
-                           selectionLost = true;
-                     }
-                  }
-               }
-               finally
-               {
-                  _isRefreshing = false;
-               }
-
-               if (collectionChanged)
-               {
-                  AgentsCollectionChanged?.Invoke(this, EventArgs.Empty);
-               }
-
-               StatusText = Agents.Count > 0
-                       ? $"Last refresh: {DateTime.Now:HH:mm:ss}  —  {Agents.Count} agent(s)"
-                       : $"Last refresh: {DateTime.Now:HH:mm:ss}  —  No agents connected";
-
-               if (previousSelectedId is not null &&
-                       (collectionChanged || SelectedAgent is null))
-                  selectionLost = true;
-
-               if (selectionLost)
-               {
-                  var restored = Agents.FirstOrDefault(a => a.Id == previousSelectedId);
-                  if (restored is not null)
-                     SelectedAgent = restored;
-               }
-            });
-         }
-         catch (OperationCanceledException)
-         {
-            break;
-         }
-         catch (Exception ex)
-         {
-            await MainThread.InvokeOnMainThreadAsync(() =>
-                StatusText = $"Broker error: {ex.Message}");
-         }
-
-         try
-         {
-            await Task.Delay(PollIntervalMs, ct);
-         }
-         catch (OperationCanceledException)
-         {
-            break;
-         }
       }
    }
 
@@ -723,39 +593,6 @@ public partial class MainViewModel : ObservableObject
       }
 #endif
    }
-
-   // ── Tap Counter Button ──────────────────────────────────────────────────
-
-//   [RelayCommand]
-//   private async Task TapCounterButtonAsync()
-//   {
-//#if ANDROID
-//        ActionStatusText = "Tap requires running UITestForge on Windows.";
-//        return;
-//#else
-//      if (SelectedAgent is null) return;
-
-//      SetBusy(true, "Tapping CounterBtn…");
-//      try
-//      {
-//         var (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(
-//             "ui tap --automationId \"CounterBtn\"",
-//             SelectedAgent);
-
-//         ActionStatusText = exitCode == 0
-//             ? "CounterBtn tapped ✓"
-//             : $"Tap failed: {stderr.Trim()}";
-//      }
-//      catch (Exception ex)
-//      {
-//         ActionStatusText = $"Error: {ex.Message}";
-//      }
-//      finally
-//      {
-//         SetBusy(false);
-//      }
-//#endif
-//   }
 
    // ── Tree Operations ─────────────────────────────────────────────────────────
 

@@ -63,8 +63,20 @@
                         <Span Text="&lt;label&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
+                        <Span Text="isvisible " FontFamily="Consolas"/>
+                        <Span Text="&lt;AutomationId&gt; &lt;label&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
+                        <Span Text="isnvisible " FontFamily="Consolas"/>
+                        <Span Text="&lt;AutomationId&gt; &lt;label&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
                         <Span Text="navigate " FontFamily="Consolas"/>
                         <Span Text="&lt;url&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
+                        <Span Text="print " FontFamily="Consolas"/>
+                        <Span Text="&lt;text&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
                         <Span Text="scroll " FontFamily="Consolas"/>

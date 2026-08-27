@@ -253,7 +253,7 @@ public partial class MainPage : ContentPage
       {
          if (string.IsNullOrEmpty(_viewModel.LastScreenshotPath) || !File.Exists(_viewModel.LastScreenshotPath))
          {
-            await DisplayAlert("Copy Failed", "No screenshot available to copy.", "OK");
+            await DisplayAlertAsync("Copy Failed", "No screenshot available to copy.", "OK");
             return;
          }
 
@@ -262,7 +262,7 @@ public partial class MainPage : ContentPage
       }
       catch (Exception ex)
       {
-         await DisplayAlert("Copy Failed", $"Failed to copy screenshot: {ex.Message}", "OK");
+         await DisplayAlertAsync("Copy Failed", $"Failed to copy screenshot: {ex.Message}", "OK");
       }
    }
 

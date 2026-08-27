@@ -6,7 +6,7 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, addsummary, exit, goto, checkpage, checknpage, call.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, addsummary, exit, goto, checkpage, checknpage, isvisible, isnvisible, print, call.
    /// Labels can be defined with a colon (e.g., "label:").
    /// </summary>
    internal static class ScriptEditorHelper
@@ -320,6 +320,75 @@ namespace UITestForge.Helpers
                      }
                   }
                }
+               else if (cmd is "isvisible" or "isnvisible")
+               {
+                  // Expected format: isvisible <automationId> [label]  /  isnvisible <automationId> [label]
+                  // If <label> is omitted, this simply checks/records the element's visibility without branching.
+                  var args = rest.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                  if (args.Length < 1)
+                  {
+                     resultLine = $"    \u2717 {cmd} requires an automationId (e.g., {cmd} MyButton [label])";
+                  }
+                  else
+                  {
+                     var automationId = args[0].Trim();
+                     var targetLabel = args.Length > 1 ? args[1].Trim() : null;
+                     var wantVisible = cmd == "isvisible";
+
+                     bool? isVisible = null;
+                     var (exitCode, stdout, _) = await DevFlowCliHelper.RunDevFlowAsync("ui tree", agent);
+                     if (exitCode == 0 && stdout.Length > 0)
+                     {
+                        try
+                        {
+                           var roots = JsonSerializer.Deserialize(stdout, DevFlowJsonContext.Default.ListTreeNode);
+                           var node = roots != null ? FindNodeByAutomationId(roots, automationId) : null;
+                           if (node != null)
+                              isVisible = node.State?.Displayed ?? node.IsVisible;
+                        }
+                        catch (JsonException)
+                        {
+                           // Fall through - isVisible stays null (element treated as not found)
+                        }
+                     }
+
+                     var matches = wantVisible ? isVisible == true : isVisible != true;
+                     var actualDesc = isVisible is null ? "not found" : isVisible == true ? "visible" : "not visible";
+
+                     if (targetLabel == null)
+                     {
+                        resultLine = matches
+                           ? $"    \u2713 element '{automationId}' is {actualDesc}"
+                           : $"    \u2717 element '{automationId}' is {actualDesc}, expected {(wantVisible ? "visible" : "not visible")}";
+                     }
+                     else if (matches)
+                     {
+                        if (!labels.TryGetValue(targetLabel, out int targetLine))
+                        {
+                           resultLine = $"    \u2717 label '{targetLabel}' not found";
+                        }
+                        else
+                        {
+                           resultLine = $"    \u2713 element '{automationId}' is {actualDesc}, jumping to {targetLabel}";
+                           TrackResult(cmd, resultLine);
+                           log.AppendLine(resultLine);
+                           onOutputUpdate(log.ToString());
+                           lineIndex = targetLine; // Jump to label
+                           continue;
+                        }
+                     }
+                     else
+                     {
+                        resultLine = $"    \u25CB element '{automationId}' is {actualDesc} - skipping";
+                     }
+                  }
+               }
+               else if (cmd == "print")
+               {
+                  resultLine = string.IsNullOrEmpty(rest)
+                     ? "    \u2139"
+                     : $"    \u2139 {rest}";
+               }
                else if (cmd == "create-pptx")
                {
                   resultLine = await HandleCreatePptxAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot, agent, scriptFolder);
@@ -495,6 +564,12 @@ namespace UITestForge.Helpers
 
             "checknpage" => string.Empty, // Handled specially in RunScriptAsync
 
+            "isvisible" => string.Empty, // Handled specially in RunScriptAsync
+
+            "isnvisible" => string.Empty, // Handled specially in RunScriptAsync
+
+            "print" => string.Empty, // Handled specially in RunScriptAsync
+
             "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
 
             "add-report-page" => string.Empty, // Handled specially in RunScriptAsync
@@ -505,6 +580,26 @@ namespace UITestForge.Helpers
 
             _ => throw new ArgumentException($"Unknown command: {cmd}")
          };
+
+      /// <summary>
+      /// Recursively searches a visual tree for a node whose automationId matches (case-insensitive).
+      /// </summary>
+      private static TreeNode? FindNodeByAutomationId(List<TreeNode> nodes, string automationId)
+      {
+         foreach (var node in nodes)
+         {
+            if (string.Equals(node.AutomationId, automationId, StringComparison.OrdinalIgnoreCase))
+               return node;
+
+            if (node.Children is { Count: > 0 })
+            {
+               var found = FindNodeByAutomationId(node.Children, automationId);
+               if (found != null) return found;
+            }
+         }
+
+         return null;
+      }
 
       /// <summary>
       /// Parses the arguments of a <c>fill</c> script command.

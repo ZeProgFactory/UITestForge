@@ -11,8 +11,6 @@ dotnet build UITestForge.csproj -f net10.0-windows10.0.19041.0 -c Release /p:Pla
     @exit /b %ERRORLEVEL%
 )    
 
-call ds "D:\GitWare\Apps\UITestForge\Doc\UITestForge.DSjson"
-
 "C:\Program Files (x86)\NSIS\makensis.exe" UITestForge.nsi
 @if %ERRORLEVEL% neq 0 (
     @echo *** Publish failed with error level %ERRORLEVEL% ***
