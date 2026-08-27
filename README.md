@@ -8,6 +8,43 @@ UITestForge is a cross-platform [.NET MAUI](https://learn.microsoft.com/dotnet/m
 
 ---
 
+## Table of Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [How it works](#how-it-works)
+- [Getting Started](#getting-started)
+  - [1. Add DevFlow to your MAUI app](#1-add-devflow-to-your-maui-app)
+  - [2. Install the DevFlow CLI](#2-install-the-devflow-cli)
+  - [3. Run your app and connect UITestForge](#3-run-your-app-and-connect-uitestforge)
+- [Script Language](#script-language)
+  - [`tap <automationId>`](#tap-automationid)
+  - [`fill <automationId> <text>`](#fill-automationid-text)
+  - [`clear <automationId>`](#clear-automationid)
+  - [`focus <automationId>`](#focus-automationid)
+  - [`screenshot [path]`](#screenshot-path)
+  - [`navigate <route>`](#navigate-route)
+  - [`scroll down|up [px]`](#scroll-downup-px)
+  - [`scroll <automationId>`](#scroll-automationid)
+  - [`call <script-filename>`](#call-script-filename)
+  - [`checkpage <pageName> [label]`](#checkpage-pagename-label)
+  - [`checknpage <pageName> [label]`](#checknpage-pagename-label)
+  - [`goto <label>`](#goto-label)
+  - [`wait <seconds>`](#wait-seconds)
+  - [`create-pptx [filename] [title]`](#create-pptx-filename-title)
+  - [`exit`](#exit)
+  - [Labels](#labels)
+  - [Comments](#comments)
+- [Example: Login Flow](#example-login-flow)
+- [Example: Conditional Navigation with Auto-Refreshing Page Checks](#example-conditional-navigation-with-auto-refreshing-page-checks)
+- [Example: Reusable Login via `call`](#example-reusable-login-via-call)
+- [CLI Equivalents](#cli-equivalents)
+- [Restrictions and next steps](#restrictions-and-next-steps)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
 ## Features
 
 - **Live UI automation** — tap, fill, clear, and focus controls in a running app by `AutomationId`.
