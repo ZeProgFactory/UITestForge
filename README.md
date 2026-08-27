@@ -291,6 +291,17 @@ ui scroll --element "SubmitBtn"
 
 ---
 
+## Restrictions and next steps
+
+- Communication with DevFlow is currently based on the CLI. Implementing a dedicated API is one of the next steps.
+- A command-line version of UITestForge itself.
+- Check and adapt UITestForge for macOS.
+- Implement a better script editor (syntax highlighting, autocomplete, inline validation).
+- Enhance the UI overall.
+- …
+
+---
+
 ## Contributing
 
 Issues and pull requests are welcome! This project is under active development, so expect breaking changes to the script syntax and CLI as it matures.
