@@ -2,7 +2,7 @@
 
 <table>
 <tr>
-<td><img src="Doc/UITestForge_logo.png" alt="UITestForge logo" width="500"></td>
+<td><img src="Doc/UITestForge_logo.png" alt="UITestForge logo" width="600"></td>
 <td><b><i>Put your MAUI app on autopilot.</i></b></br></br>
 UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui/">.NET MAUI</a> companion app that lets you drive, inspect, and test another running MAUI app in real time. Using <a href="https://www.nuget.org/packages/Microsoft.Maui.DevFlow.Agent">Microsoft.Maui.DevFlow.Agent</a>, UITestForge connects to your app, taps and fills controls, navigates Shell routes, captures screenshots, and runs simple scripts you write yourself — no recompiling, no attaching a debugger, no writing UI test infrastructure.</td>
 </tr>
