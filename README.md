@@ -23,6 +23,12 @@ UITestForge is a cross-platform [.NET MAUI](https://learn.microsoft.com/dotnet/m
 - **Snippet buttons** — quickly insert common command templates into the script editor.
 - **Streaming execution log** — watch each script step run and report success/failure line by line.
 
+## Screenshots
+
+| Connect & inspect | Script editor help |
+|---|---|
+| ![UITestForge connected to a running app, showing the visual tree inspector](Screenshots/Screenshot%202026-08-27%20024507.png) | ![UITestForge script editor running a test script with a streaming execution log](Screenshots/Screenshot%202026-08-27%20024556.png) |
+
 ## How it works
 
 UITestForge talks to your target app through the DevFlow broker/agent, then drives it using the same commands available from the CLI (`ui tap`, `ui fill`, `ui navigate`, etc.). Scripts in the editor are just a friendlier, file-based way to sequence those same commands.
