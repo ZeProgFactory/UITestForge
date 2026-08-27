@@ -276,22 +276,88 @@ internal static class PptxReportHelper
       // Create notes if they don't exist
       newSlide.AddNotes(scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
 
-      // Save the presentation back to the same file
-      pres.Save(CurrentPPTXFile);
-   }
+         // Save the presentation back to the same file
+         pres.Save(CurrentPPTXFile);
+      }
 
-   /// <summary>
-   /// Helper method to add a column with a header and an image.
-   /// </summary>
-   private static void AddColumnWithImage(
-       IUserSlideShapeCollection shapes,
-       int x,
-       int y,
-       int width,
-       int height,
-       string headerText,
-       string? imagePath)
-   {
+      /// <summary>
+      /// Adds a full-width summary slide (execution stats, duration, checked pages, etc.)
+      /// to the existing PPTX referenced by <see cref="CurrentPPTXFile"/>.
+      /// </summary>
+      /// <param name="summaryText">Multi-line text describing the script execution summary.</param>
+      /// <param name="slideTitle">Optional title for the slide (default: "Execution Summary").</param>
+      public static void AddSummaryPage(
+          string summaryText,
+          string slideTitle = "Execution Summary")
+      {
+         if (string.IsNullOrEmpty(CurrentPPTXFile) || !File.Exists(CurrentPPTXFile))
+         {
+            throw new InvalidOperationException("No current PPTX file. Create a report first using CreateReport().");
+         }
+
+         // Load the existing presentation
+         var pres = new Presentation(CurrentPPTXFile);
+         var initialCount = pres.Slides.Count;
+
+         // Get the first slide layout from the first slide master
+         int slideLayout = pres.MasterSlides[0].LayoutSlides[0].Number;
+
+         // Add a new slide
+         pres.Slides.Add(slideLayout);
+         var newSlide = pres.Slides[initialCount]; // Get the newly added slide
+         var shapes = newSlide.Shapes;
+
+         // Get slide dimensions
+         int slideWidth = (int)pres.SlideWidth;
+         int slideHeight = (int)pres.SlideHeight;
+
+         // Layout constants
+         const int margin = 20;
+         const int titleHeight = 60;
+
+         // Content area (below title) spans the full slide width
+         int contentY = margin + titleHeight + 10;
+         int contentHeight = slideHeight - contentY - margin;
+         int contentWidth = slideWidth - (2 * margin);
+
+         AddBackgroundImage(shapes, slideWidth, slideHeight);
+
+         // Add slide title
+         shapes.AddShape(
+             x: margin,
+             y: margin,
+             width: contentWidth,
+             height: titleHeight,
+             geometry: Geometry.Rectangle);
+         var titleShape = shapes.Last();
+         titleShape.Fill.SetColor("4472C4"); // Blue background
+         titleShape.Outline.SetNoOutline();
+         titleShape.TextBox.SetText(slideTitle);
+         titleShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
+         titleShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
+         titleShape.TextBox.Paragraphs.First().SetFontColor("FFFFFF"); // White text
+         titleShape.TextBox.Paragraphs.First().SetFontSize(28);
+         titleShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
+
+         // Single full-width column with the summary text
+         AddColumnWithText(shapes, margin, contentY, contentWidth, contentHeight, "Summary", summaryText);
+
+               // Save the presentation back to the same file
+               pres.Save(CurrentPPTXFile);
+            }
+
+            /// <summary>
+            /// Helper method to add a column with a header and an image.
+            /// </summary>
+            private static void AddColumnWithImage(
+             IUserSlideShapeCollection shapes,
+             int x,
+             int y,
+             int width,
+             int height,
+             string headerText,
+             string? imagePath)
+         {
       const int headerHeight = 40;
       const int spacing = 5;
 

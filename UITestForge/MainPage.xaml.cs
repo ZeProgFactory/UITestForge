@@ -29,7 +29,7 @@ public partial class MainPage : ContentPage
       {
          _viewModel.Load();
 
-         if( System.IO.File.Exists(_viewModel.Config.LastScript))
+         if (System.IO.File.Exists(_viewModel.Config.LastScript))
          {
             ScriptEditor.Text = System.IO.File.ReadAllText(_viewModel.Config.LastScript);
          }
@@ -233,6 +233,18 @@ public partial class MainPage : ContentPage
          ScriptClearBtn.IsEnabled = true;
       }
 #endif
+   }
+
+   private void OnScriptOutputBorderSizeChanged(object? sender, EventArgs e)
+   {
+      // ScrollView never stretches its content, so give the Editor an explicit
+      // minimum width matching the visible area. This makes it fill the border
+      // horizontally for short lines, while still allowing AutoSize/ScrollView
+      // to grow and scroll for lines longer than the available width.
+      if (sender is Border border && border.Width > 0)
+      {
+         ScriptOutputLabel.MinimumWidthRequest = Math.Max(0, border.Width - 12);
+      }
    }
 
    private async void OnCopyScreenshotClicked(object? sender, EventArgs e)

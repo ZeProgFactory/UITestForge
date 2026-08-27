@@ -6,11 +6,24 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, exit, goto, checkpage, checknpage, call.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, addsummary, exit, goto, checkpage, checknpage, call.
    /// Labels can be defined with a colon (e.g., "label:").
    /// </summary>
    internal static class ScriptEditorHelper
    {
+      /// <summary>
+      /// Shared execution-summary state (step counts, checked pages) for a top-level script run.
+      /// Passed through recursive <c>call</c> invocations so nested scripts contribute to the
+      /// same summary used by the <c>addsummary</c> command.
+      /// </summary>
+      private sealed class ScriptExecutionSummary
+      {
+         public DateTime StartTime { get; } = DateTime.Now;
+         public int SuccessCount;
+         public int FailCount;
+         public List<string> CheckedPages { get; } = new();
+      }
+
       /// <summary>
       /// Executes a multi-line script against the given agent.
       /// Tracks first and last screenshots for PowerPoint report generation via create-pptx command.
@@ -24,7 +37,7 @@ namespace UITestForge.Helpers
       /// <param name="scriptFolder">The folder to use for saving PPTX files when no absolute path is provided.</param>
       /// <param name="currentPageName">The current page name for checkpage command comparison.</param>
       /// <returns>The total number of steps executed and any unhandled exception.</returns>
-      internal static async Task<(int StepCount, Exception? Error)> RunScriptAsync(
+      internal static Task<(int StepCount, Exception? Error)> RunScriptAsync(
          string scriptText,
          DevFlowAgent agent,
          Action<int, string> onStepStatus,
@@ -33,7 +46,25 @@ namespace UITestForge.Helpers
          Func<Task<string?>>? onGetCurrentPage = null,
          string? scriptFolder = null,
          string? currentPageName = null)
+         => RunScriptAsync(scriptText, agent, onStepStatus, onOutputUpdate, onScreenshotCaptured, onGetCurrentPage, scriptFolder, currentPageName, null);
+
+      /// <summary>
+      /// Internal overload that threads a shared <see cref="ScriptExecutionSummary"/> through recursive
+      /// <c>call</c> invocations so nested scripts contribute to the same summary totals.
+      /// </summary>
+      private static async Task<(int StepCount, Exception? Error)> RunScriptAsync(
+         string scriptText,
+         DevFlowAgent agent,
+         Action<int, string> onStepStatus,
+         Action<string> onOutputUpdate,
+         Action<string> onScreenshotCaptured,
+         Func<Task<string?>>? onGetCurrentPage,
+         string? scriptFolder,
+         string? currentPageName,
+         ScriptExecutionSummary? summary)
       {
+         summary ??= new ScriptExecutionSummary();
+
          var lines = scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
          var log = new System.Text.StringBuilder();
          int stepNum = 0;
@@ -41,6 +72,18 @@ namespace UITestForge.Helpers
          // Track screenshots for PPTX generation
          string? firstScreenshot = null;
          string? lastScreenshot = null;
+
+         // Track execution summary stats (for addsummary command)
+         // These are stored on the shared `summary` instance so nested `call`ed scripts
+         // contribute to the same totals as the top-level script.
+         void TrackResult(string command, string line, string? pageName = null)
+         {
+            if (line.Contains('\u2713')) summary.SuccessCount++;
+            else if (line.Contains('\u2717')) summary.FailCount++;
+
+            if (command is "checkpage" or "checknpage" && !string.IsNullOrWhiteSpace(pageName))
+               summary.CheckedPages.Add(pageName);
+         }
 
          // Build label dictionary for goto support
          var labels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -69,6 +112,7 @@ namespace UITestForge.Helpers
                var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
                var cmd = parts[0].ToLowerInvariant();
                var rest = parts.Length > 1 ? parts[1] : string.Empty;
+               string? checkedPageName = null;
 
                onStepStatus(stepNum, cmd);
                log.AppendLine($"[{stepNum}] {line}");
@@ -80,7 +124,9 @@ namespace UITestForge.Helpers
                }
                catch (ArgumentException ex)
                {
-                  log.AppendLine($"    \u2717 {ex.Message}");
+                  var argErrorLine = $"    \u2717 {ex.Message}";
+                  TrackResult(cmd, argErrorLine);
+                  log.AppendLine(argErrorLine);
                   onOutputUpdate(log.ToString());
                   continue;
                }
@@ -123,6 +169,7 @@ namespace UITestForge.Helpers
                else if (cmd == "exit")
                {
                   resultLine = "    ✓ script execution stopped";
+                  TrackResult(cmd, resultLine);
                   log.AppendLine(resultLine);
                   onOutputUpdate(log.ToString());
                   return (stepNum, null);
@@ -140,6 +187,7 @@ namespace UITestForge.Helpers
                   else
                   {
                      resultLine = $"    ✓ jumping to {rest.Trim()}";
+                     TrackResult(cmd, resultLine);
                      log.AppendLine(resultLine);
                      onOutputUpdate(log.ToString());
                      lineIndex = targetLine; // Jump to label (loop will increment)
@@ -148,16 +196,18 @@ namespace UITestForge.Helpers
                }
                else if (cmd == "checkpage")
                {
-                  // Expected format: checkpage <pageName> <label>
+                  // Expected format: checkpage <pageName> [label]
+                  // If <label> is omitted, this simply checks/records the current page without branching.
                   var args = rest.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                  if (args.Length < 2)
+                  if (args.Length < 1)
                   {
-                     resultLine = "    ✗ checkpage requires a page name and label (e.g., checkpage MainPage myLabel)";
+                     resultLine = "    ✗ checkpage requires a page name (e.g., checkpage MainPage [label])";
                   }
                   else
                   {
                      var expectedPage = args[0].Trim();
-                     var targetLabel = args[1].Trim();
+                     var targetLabel = args.Length > 1 ? args[1].Trim() : null;
+                     checkedPageName = expectedPage;
 
                      // Refresh TreeView to get current page name
                      var actualPageName = currentPageName;
@@ -176,7 +226,16 @@ namespace UITestForge.Helpers
                         }
                      }
 
-                     if (string.Equals(actualPageName, expectedPage, StringComparison.OrdinalIgnoreCase))
+                     var matches = string.Equals(actualPageName, expectedPage, StringComparison.OrdinalIgnoreCase);
+
+                     if (targetLabel == null)
+                     {
+                        // No label given - just check and record the page, without jumping.
+                        resultLine = matches
+                           ? $"    ✓ page is '{actualPageName}', matches '{expectedPage}'"
+                           : $"    ✗ page is '{actualPageName ?? "(null)"}', expected '{expectedPage}'";
+                     }
+                     else if (matches)
                      {
                         if (!labels.TryGetValue(targetLabel, out int targetLine))
                         {
@@ -185,6 +244,7 @@ namespace UITestForge.Helpers
                         else
                         {
                            resultLine = $"    ✓ page matches '{expectedPage}', jumping to {targetLabel}";
+                           TrackResult(cmd, resultLine, checkedPageName);
                            log.AppendLine(resultLine);
                            onOutputUpdate(log.ToString());
                            lineIndex = targetLine; // Jump to label
@@ -199,16 +259,18 @@ namespace UITestForge.Helpers
                }
                else if (cmd == "checknpage")
                {
-                  // Expected format: checknpage <pageName> <label>
+                  // Expected format: checknpage <pageName> [label]
+                  // If <label> is omitted, this simply checks/records the current page without branching.
                   var args = rest.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                  if (args.Length < 2)
+                  if (args.Length < 1)
                   {
-                     resultLine = "    ✗ checknpage requires a page name and label (e.g., checknpage MainPage myLabel)";
+                     resultLine = "    ✗ checknpage requires a page name (e.g., checknpage MainPage [label])";
                   }
                   else
                   {
                      var expectedPage = args[0].Trim();
-                     var targetLabel = args[1].Trim();
+                     var targetLabel = args.Length > 1 ? args[1].Trim() : null;
+                     checkedPageName = expectedPage;
 
                      // Refresh TreeView to get current page name
                      var actualPageName = currentPageName;
@@ -227,7 +289,16 @@ namespace UITestForge.Helpers
                         }
                      }
 
-                     if (!string.Equals(actualPageName, expectedPage, StringComparison.OrdinalIgnoreCase))
+                     var matches = string.Equals(actualPageName, expectedPage, StringComparison.OrdinalIgnoreCase);
+
+                     if (targetLabel == null)
+                     {
+                        // No label given - just check and record the page, without jumping.
+                        resultLine = !matches
+                           ? $"    ✓ page is '{actualPageName ?? "(null)"}', does not match '{expectedPage}'"
+                           : $"    ✗ page is '{actualPageName}', unexpectedly matches '{expectedPage}'";
+                     }
+                     else if (!matches)
                      {
                         if (!labels.TryGetValue(targetLabel, out int targetLine))
                         {
@@ -236,6 +307,7 @@ namespace UITestForge.Helpers
                         else
                         {
                            resultLine = $"    ✓ page does not match '{expectedPage}', jumping to {targetLabel}";
+                           TrackResult(cmd, resultLine, checkedPageName);
                            log.AppendLine(resultLine);
                            onOutputUpdate(log.ToString());
                            lineIndex = targetLine; // Jump to label
@@ -252,9 +324,14 @@ namespace UITestForge.Helpers
                {
                   resultLine = await HandleCreatePptxAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot, agent, scriptFolder);
                }
-               else if (cmd == "add-report-page")
+                else if (cmd == "add-report-page")
                {
                   resultLine = await HandleAddReportPageAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot);
+               }
+               else if (cmd == "addsummary")
+               {
+                  var elapsed = DateTime.Now - summary.StartTime;
+                  resultLine = await HandleAddSummaryAsync(rest, stepNum, summary.SuccessCount, summary.FailCount, elapsed, summary.CheckedPages);
                }
                else if (cmd == "call")
                {
@@ -297,7 +374,8 @@ namespace UITestForge.Helpers
                               onScreenshotCaptured,
                               onGetCurrentPage,
                               calledScriptFolder,
-                              currentPageName);
+                              currentPageName,
+                              summary);
 
                            stepNum += calledSteps;
 
@@ -328,11 +406,12 @@ namespace UITestForge.Helpers
                      : $"    \u2717 '{cmd}' failed{(detail.Length > 0 ? $": {detail}" : $" (exit code {exitCode})")}";
                }
 
-               log.AppendLine(resultLine);
-               onOutputUpdate(log.ToString());
-            }
+                     TrackResult(cmd, resultLine, checkedPageName);
+                     log.AppendLine(resultLine);
+                     onOutputUpdate(log.ToString());
+                  }
 
-            return (stepNum, null);
+               return (stepNum, null);
          }
          catch (Exception ex)
          {
@@ -419,6 +498,8 @@ namespace UITestForge.Helpers
             "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
 
             "add-report-page" => string.Empty, // Handled specially in RunScriptAsync
+
+            "addsummary" => string.Empty, // Handled specially in RunScriptAsync
 
             "call" => string.Empty, // Handled specially in RunScriptAsync
 
@@ -583,6 +664,51 @@ namespace UITestForge.Helpers
             return Task.FromResult($"    \u2717 Failed to add report page: {ex.Message}");
          }
       }
+
+         /// <summary>
+         /// Handles the <c>addsummary</c> command to add a script execution summary page to the current PPTX.
+         /// Expected format: <c>addsummary [title]</c>. If title is omitted, uses: Execution Summary.
+         /// Includes total steps, successes/failures, execution duration, and checked pages.
+         /// </summary>
+         private static Task<string> HandleAddSummaryAsync(
+            string rest,
+            int totalSteps,
+            int successCount,
+            int failCount,
+            TimeSpan elapsed,
+            List<string> checkedPages)
+         {
+            try
+            {
+               if (string.IsNullOrEmpty(PptxReportHelper.CurrentPPTXFile) ||
+                   !File.Exists(PptxReportHelper.CurrentPPTXFile))
+               {
+                  return Task.FromResult("    \u2717 No PPTX file open. Use 'create-pptx' first.");
+               }
+
+               var title = !string.IsNullOrWhiteSpace(rest)
+                  ? rest.Trim('"')
+                  : "Execution Summary";
+
+               var summary = new System.Text.StringBuilder();
+               summary.AppendLine($"Total steps: {totalSteps}");
+               summary.AppendLine($"Succeeded: {successCount}");
+               summary.AppendLine($"Failed: {failCount}");
+               summary.AppendLine($"Duration: {elapsed:hh\\:mm\\:ss}");
+               summary.AppendLine();
+               summary.AppendLine(checkedPages.Count > 0 ? "Checked pages:" : "Checked pages: none");
+               foreach (var entry in checkedPages)
+                  summary.AppendLine($"  - {entry}");
+
+               PptxReportHelper.AddSummaryPage(summary.ToString(), title);
+
+               return Task.FromResult($"    \u2713 Summary page added to {Path.GetFileName(PptxReportHelper.CurrentPPTXFile)}");
+            }
+            catch (Exception ex)
+            {
+               return Task.FromResult($"    \u2717 Failed to add summary page: {ex.Message}");
+            }
+         }
+      }
+   #endif
    }
-#endif
-}

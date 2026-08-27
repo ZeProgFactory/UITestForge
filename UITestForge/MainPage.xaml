@@ -400,8 +400,9 @@
                </Grid>
 
                <!-- Output log -->
-               <Border Grid.Row="4"
+               <Border x:Name="ScriptOutputBorder" Grid.Row="4"
                        HeightRequest="130"
+                       SizeChanged="OnScriptOutputBorderSizeChanged"
                        BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#111}"
                        StrokeThickness="1"
                        Stroke="{AppThemeBinding Light=LightGray, Dark=#444}">
@@ -409,7 +410,9 @@
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
 
-                     <ScrollView Orientation="Both">
+                     <ScrollView Orientation="Both"
+                                 HorizontalScrollBarVisibility="Always"
+                                 VerticalScrollBarVisibility="Always">
                         <Editor x:Name="ScriptOutputLabel"
                               FontFamily="Courier New"
                               FontSize="11"
@@ -418,6 +421,7 @@
                               Margin="6,4"
                               HorizontalOptions="Start"
                               VerticalOptions="Start"
+                              MinimumHeightRequest="120"
                               AutoSize="TextChanges"
                               Text="{Binding ScriptOutputText}"
                               Placeholder="(output will appear here)" />

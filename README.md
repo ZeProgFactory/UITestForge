@@ -96,11 +96,13 @@ Scripts are plain text files (`.df`) made up of simple, line-based commands: `co
 | `navigate` | Navigate to a Shell route |
 | `scroll` | Scroll the page or an element into view |
 | `call` | Run another script file inline |
-| `checkpage` | Branch if the current page matches |
-| `checknpage` | Branch if the current page does *not* match |
+| `checkpage` | Check the current page (optionally branch if it matches) |
+| `checknpage` | Check the current page (optionally branch if it does *not* match) |
 | `goto` | Jump to a label |
 | `wait` | Pause execution |
 | `create-pptx` | Generate a PowerPoint report of the run |
+| `add-report-page` | Add a before/log/after report page to the current PPTX |
+| `addsummary` | Add an execution summary page (steps, pass/fail, duration, checked pages) to the current PPTX |
 | `exit` | Stop script execution |
 | `# comment` | Ignored |
 | `label:` | Defines a jump target for `goto` / `checkpage` / `checknpage` |
@@ -161,16 +163,18 @@ Executes another script file, then resumes with the next line of the current scr
 call common_login.df
 ```
 
-### `checkpage <pageName> <label>`
-If the app's current page matches `pageName`, jumps to `label`.
+### `checkpage <pageName> [label]`
+If the app's current page matches `pageName`, jumps to `label`. If `label` is omitted, this just checks and records the page (no branching) — useful when you only want the page to show up in the `addsummary` report.
 ```
 checkpage SettingsPage onSettings
+checkpage SettingsPage
 ```
 
-### `checknpage <pageName> <label>`
-If the app's current page does **not** match `pageName`, jumps to `label`.
+### `checknpage <pageName> [label]`
+If the app's current page does **not** match `pageName`, jumps to `label`. If `label` is omitted, this just checks and records the page (no branching).
 ```
 checknpage SettingsPage afterSettings
+checknpage SettingsPage
 ```
 
 ### `goto <label>`
