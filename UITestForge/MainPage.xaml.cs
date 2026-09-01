@@ -1,10 +1,11 @@
-﻿using UITestForge.Helpers;
-using UITestForge.Views;
-using UITestForge.ViewModels;
-using CommunityToolkit.Maui.Views;
+﻿using System.Text;
 using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Storage;
-using System.Text;
+using CommunityToolkit.Maui.Views;
+using UITestForge.Helpers;
+using UITestForge.ViewModels;
+using UITestForge.Views;
+using ZPF.Maui.Script.ScriptEditing;
 
 namespace UITestForge;
 
@@ -34,6 +35,11 @@ public partial class MainPage : ContentPage
             ScriptEditor.Text = System.IO.File.ReadAllText(_viewModel.Config.LastScript);
          }
       };
+
+      ScriptEditor.Theme = ScriptPadTheme.Light();          // or Dark()
+      ScriptEditor.Highlighter = new UITestForgeScriptHighlighter();
+      //EditorCtl.Highlighter = new MarkdownHighlighter();     // or PlainTextHighlighter / your own
+
    }
 
    private void OnAgentsCollectionChanged(object? sender, EventArgs e)

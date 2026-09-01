@@ -57,6 +57,7 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 - **Live UI automation** — tap, fill, clear, and focus controls in a running app by `AutomationId`.
 - **Visual tree inspector** — browse the live page/element tree of the target app to find automation IDs.
 - **Script editor** — write, save, and run repeatable test scripts using a simple line-based DSL.
+- **Syntax highlighting** — the editor colorizes commands, labels, `goto`/`call` targets, quoted arguments, numbers, and comments as you type.
 - **Flow control** — labels, `goto`, and conditional page checks (`checkpage` / `checknpage`) let you branch scripts based on the app's current state.
 - **Script composition** — the `call` command lets you reuse scripts as building blocks for larger flows.
 - **Screenshot capture** — grab screenshots at any point during a run for visual verification.
@@ -96,7 +97,7 @@ Running MAUI Application</br>
 
 **Project file `.csproj`**
 ```xml
-<PackageReference Include="Microsoft.Maui.DevFlow.Agent" Version="0.1.0-preview.12.26368.2" />
+<PackageReference Include="Microsoft.Maui.DevFlow.Agent" Version="0.1.0-preview.12.26368.2" Condition="'$(Configuration)' == 'Debug'" />
 ```
 
 **`MauiProgram.cs`**
@@ -129,6 +130,20 @@ Launch your instrumented MAUI app in debug mode, then open UITestForge and conne
 ## Script Language
 
 Scripts are plain text files (`.df`) made up of simple, line-based commands: `command [args]`. Blank lines and lines starting with `#` are ignored.
+
+The built-in script editor highlights this syntax while you type:
+
+| Token | Styling |
+|---|---|
+| Known commands (`tap`, `fill`, `goto`, …) | Keyword color, **bold** |
+| Unknown / misspelled commands | Underlined in the emphasis color, so typos stand out |
+| Label definitions (`login:`) | Heading color, **bold** |
+| `goto` / `call` targets | Link color, underlined |
+| Quoted arguments (`"Counter Test Demo"`) | String color |
+| Numeric arguments (`wait 2`, `scroll down 400`) | Number color |
+| Comments (`# …`, including trailing comments) | Comment color, *italic* |
+
+Colors follow the active editor theme (dark or light), so highlighting stays readable in both.
 
 | Command | Description |
 |---|---|
@@ -360,7 +375,6 @@ ui scroll --element "SubmitBtn"
 - Communication with DevFlow is currently based on the CLI. Implementing a dedicated API is one of the next steps.
 - A command-line version of UITestForge itself.
 - Check and adapt UITestForge for macOS.
-- Implement a better script editor (syntax highlighting, autocomplete, inline validation).
 - Enhance the UI overall.
 - …
 

@@ -1,8 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="UITestForge.MainPage"
-             Title="DevFlow Monitor">
+<ContentPage 
+xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+xmlns:edit="clr-namespace:ZPF.Maui.Script;assembly=ScriptPad"
+   
+x:Class="UITestForge.MainPage"
+Title="DevFlow Monitor">
 
    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="0" RowSpacing="8">
 
@@ -352,14 +355,23 @@
                   <Border.StrokeShape>
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
-                  <Editor x:Name="ScriptEditor"
+                  
+                  <!--<Editor x:Name="ScriptEditor"
                           FontFamily="Courier New"
                           FontSize="13"
                           Placeholder="# Write your devflow script here&#x0a;# Available commands: tap, fill, clear, focus, navigate, scroll, screenshot&#x0a;# Example:&#x0a;tap MyButton&#x0a;fill MyEntry Hello&#x0a;screenshot"
                           AutoSize="TextChanges"
                           VerticalOptions="Fill"
                           IsSpellCheckEnabled="False"
-                          Margin="4" />
+                          Margin="4" />-->
+
+                  <edit:ScriptPad x:Name="ScriptEditor" 
+                       WordWrap="False"
+                       ShowLineNumbers="True"
+                       EditorFontSize="13"
+                       VerticalOptions="Fill"
+                       HorizontalOptions="Fill" />
+                  
                </Border>
 
                <!-- Run / Clear buttons -->
