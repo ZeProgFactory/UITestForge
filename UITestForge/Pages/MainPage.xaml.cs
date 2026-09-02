@@ -33,6 +33,7 @@ public partial class MainPage : ContentPage
          if (System.IO.File.Exists(_viewModel.Config.LastScript))
          {
             ScriptEditor.Text = System.IO.File.ReadAllText(_viewModel.Config.LastScript);
+            ScriptEditor.IsModified = false;
          }
       };
 
@@ -190,6 +191,20 @@ public partial class MainPage : ContentPage
    {
       var popup = new SyntaxHelpPopup();
       this.ShowPopup(popup);
+   }
+
+   private async void OnPopoutClicked(object? sender, EventArgs e)
+   {
+      var editorPage = new ScriptPad.Sample.EditorPage();
+
+      editorPage.RootPath = _viewModel.Config.ScriptFolder;
+      editorPage.Highlighter = new UITestForgeScriptHighlighter();
+      editorPage.Text = ScriptEditor.Text ?? string.Empty;
+      editorPage.FileName = _viewModel.Config.LastScript;
+      editorPage.CaretPosition = ScriptEditor.GetCaret();
+      editorPage.IsModified = ScriptEditor.IsModified;
+
+      await Navigation.PushAsync(editorPage);
    }
 
    private async void OnScriptRunClicked(object? sender, EventArgs e)

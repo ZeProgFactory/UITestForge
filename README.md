@@ -65,7 +65,6 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 - **Scroll support** — scroll the page by a pixel amount or scroll a specific element into view.
 - **Automatic PowerPoint reporting** — generate a `.pptx` report from a script run with before/after screenshots and the full execution log via `create-pptx`.
 - **Auto-refreshing page checks** — `checkpage` / `checknpage` always re-read the live visual tree before comparing, so checks reflect the app's true current state.
-- **Snippet buttons** — quickly insert common command templates into the script editor.
 - **Streaming execution log** — watch each script step run and report success/failure line by line.
 
 ## Screenshots
@@ -376,6 +375,7 @@ ui scroll --element "SubmitBtn"
 - A command-line version of UITestForge itself.
 - Check and adapt UITestForge for macOS.
 - Enhance the UI overall.
+- *"Snippet buttons"* — quickly insert common command templates into the script editor.
 - …
 
 ---

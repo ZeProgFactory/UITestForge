@@ -92,19 +92,10 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.100" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.11" />
-		<PackageReference Include="ScriptPad" Version="10.0.0.8" />
+		<PackageReference Include="ScriptPad" Version="10.0.0.13" />
 		<PackageReference Include="ShapeCrawler" Version="0.80.0" />
 		<PackageReference Include="System.Drawing.Common" Version="10.0.11" />
 		<PackageReference Include="ZPF_Basics" Version="2.1.1.20" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiXaml Update="MainWindow.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\SyntaxHelpPopup.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
 	</ItemGroup>
 
 </Project>

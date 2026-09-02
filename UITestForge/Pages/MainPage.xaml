@@ -329,7 +329,7 @@ Title="DevFlow Monitor">
             <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="4">
 
                <!-- Header -->
-               <Grid ColumnDefinitions="*,*" Grid.Row="0">
+               <Grid ColumnDefinitions="*,Auto,Auto" Grid.Row="0" ColumnSpacing="6">
 
                   <Label Grid.Row="0"
                       Text="📝 Script Editor"
@@ -343,9 +343,19 @@ Title="DevFlow Monitor">
                        Text="📖 Syntax Helper"
                        FontSize="11"
                        HorizontalOptions="End"
-                       Clicked="OnShowSyntaxHelperClicked" />
+                               Clicked="OnShowSyntaxHelperClicked" />
 
-               </Grid>
+                          <!-- Popout Button -->
+                          <Button x:Name="PopoutBtn"
+                               Grid.Column="2"
+                               Text="🗗 Popout"
+                               FontSize="11"
+                               AutomationId="PopoutBtn"
+                               HorizontalOptions="End"
+                               ToolTipProperties.Text="Open the script editor in a separate page"
+                               Clicked="OnPopoutClicked" />
+
+                       </Grid>
 
                <!-- Script text editor -->
                <Border Grid.Row="2"
