@@ -78,8 +78,14 @@ public partial class MainPage : ContentPage
    private void OnExpandToggled(object? sender, TappedEventArgs e)
    {
       if (e.Parameter is not TreeNodeItem item || !item.HasChildren) return;
+
       if (item.IsExpanded) _viewModel.CollapseNode(item);
       else _viewModel.ExpandNode(item);
+
+      // Inserting/removing rows makes the CollectionView reset its scroll offset to
+      // the top. Re-anchor on the node that was toggled once layout has settled.
+      Dispatcher.Dispatch(() =>
+         TreeView.ScrollTo(item, position: ScrollToPosition.Start, animate: false));
    }
 
    private async void OnTreeNodeDoubleTapped(object? sender, TappedEventArgs e)
