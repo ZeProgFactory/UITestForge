@@ -52,6 +52,10 @@
                        EditorFontSize="14"
                        VerticalOptions="Fill"
                        HorizontalOptions="Fill" />
+      
+      <!--<edit:ScriptPad Grid.Column="1" Grid.Row="1"
+                CustomMenuItemText="Send to AI"
+                CustomMenuCommand="{Binding SendToAiCommand}" />-->
    </Grid>
 
 </ContentPage>

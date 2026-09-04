@@ -1,7 +1,9 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Storage;
 using CommunityToolkit.Maui.Views;
+using ScriptPad.Sample;
 using UITestForge.Helpers;
 using UITestForge.ViewModels;
 using UITestForge.Views;
@@ -34,13 +36,25 @@ public partial class MainPage : ContentPage
          {
             ScriptEditor.Text = System.IO.File.ReadAllText(_viewModel.Config.LastScript);
             ScriptEditor.IsModified = false;
+
+            // optional user entry in the editor context menu (right click / long press).
+            // The command parameter is the current selection (empty string when nothing is selected).
+            ScriptEditor.CustomMenuItemText = "Run script";
+            ScriptEditor.CustomMenuCommand = new Command<string>(
+               async selection =>
+               {
+                  var script = string.IsNullOrWhiteSpace(selection) ? ScriptEditor.CurrentLine : selection;
+                  Debug.WriteLine($"RunScript({ScriptEditor.FileName}): \"{script}\"");
+
+                  //run the script in the editor, or just the selected text if any.
+                  await RunScriptAsync(script);
+               });
          }
       };
 
       ScriptEditor.Theme = ScriptPadTheme.Light();          // or Dark()
       ScriptEditor.Highlighter = new UITestForgeScriptHighlighter();
       //EditorCtl.Highlighter = new MarkdownHighlighter();     // or PlainTextHighlighter / your own
-
    }
 
    private void OnAgentsCollectionChanged(object? sender, EventArgs e)
@@ -183,7 +197,7 @@ public partial class MainPage : ContentPage
       catch (Exception ex)
       {
          _viewModel.UpdateScriptStatus($"Save failed: {ex.Message}");
-         await DisplayAlert("Save Error", $"Failed to save script: {ex.Message}", "OK");
+         await DisplayAlertAsync("Save Error", $"Failed to save script: {ex.Message}", "OK");
       }
    }
 
@@ -215,6 +229,16 @@ public partial class MainPage : ContentPage
 
    private async void OnScriptRunClicked(object? sender, EventArgs e)
    {
+      await RunScriptAsync(ScriptEditor.Text ?? string.Empty);
+   }
+
+   /// <summary>
+   /// Runs the supplied script text against the currently selected agent,
+   /// updating status, output and screenshot UI while it executes.
+   /// </summary>
+   /// <param name="script">The script text to execute.</param>
+   private async Task RunScriptAsync(string script)
+   {
 #if ANDROID
         _viewModel.UpdateScriptStatus("Script execution requires running UITestForge on Windows.");
         return;
@@ -232,7 +256,7 @@ public partial class MainPage : ContentPage
       try
       {
          var (stepCount, error) = await ScriptEditorHelper.RunScriptAsync(
-             ScriptEditor.Text ?? string.Empty,
+             script,
              _viewModel.SelectedAgent,
              onStepStatus: (n, cmd) => _viewModel.UpdateScriptStatus($"Step {n}: {cmd}…"),
              onOutputUpdate: (text) => _viewModel.UpdateScriptOutput(text),

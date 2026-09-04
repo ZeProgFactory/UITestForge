@@ -10,6 +10,12 @@ namespace ScriptPad.Sample
 
       public string RootPath { get => FileExplorer.RootPath; set => FileExplorer.RootPath = value; }
 
+      /// <summary>Gives access to the file explorer shown on this page (context menu, events, ...).</summary>
+      public FileExplorerTreeView Explorer => FileExplorer;
+
+      /// <summary>Gives access to the editor shown on this page (context menu, caret, find, ...).</summary>
+      public ZPF.Maui.Script.ScriptPad Editor => EditorCtl;
+
       public string FileName 
       { 
          get => EditorCtl.FileName; 

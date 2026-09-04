@@ -16,6 +16,7 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 
 - [Features](#features)
 - [Screenshots](#screenshots)
+- [Script editor documentation](#script-editor-documentation)
 - [How it works](#how-it-works)
 - [Getting Started](#getting-started)
   - [1. Add DevFlow to your MAUI app](#1-add-devflow-to-your-maui-app)
@@ -54,10 +55,11 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 
 ## Features
 
-- **Live UI automation** — tap, fill, clear, and focus controls in a running app by `AutomationId`.
+- **Live UI automation**
 - **Visual tree inspector** — browse the live page/element tree of the target app to find automation IDs.
 - **Script editor** — write, save, and run repeatable test scripts using a simple line-based DSL.
 - **Syntax highlighting** — the editor colorizes commands, labels, `goto`/`call` targets, quoted arguments, numbers, and comments as you type.
+- **"Run script" context menu command** — right-click (or long-press) in the script editor and choose **Run script** to execute the selected text, or the current line when nothing is selected.
 - **Flow control** — labels, `goto`, and conditional page checks (`checkpage` / `checknpage`) let you branch scripts based on the app's current state.
 - **Script composition** — the `call` command lets you reuse scripts as building blocks for larger flows.
 - **Screenshot capture** — grab screenshots at any point during a run for visual verification.
@@ -67,11 +69,28 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 - **Auto-refreshing page checks** — `checkpage` / `checknpage` always re-read the live visual tree before comparing, so checks reflect the app's true current state.
 - **Streaming execution log** — watch each script step run and report success/failure line by line.
 
+---
+
 ## Screenshots
 
 | Connect & inspect | Script editor help |
 |---|---|
-| ![UITestForge connected to a running app, showing the visual tree inspector](Screenshots/Screenshot%202026-08-27%20024507.png) | ![UITestForge script editor running a test script with a streaming execution log](Screenshots/Screenshot%202026-08-27%20024556.png) |
+| ![UITestForge connected to a running app, showing the visual tree inspector](Screenshots/Screenshot01.png) | ![UITestForge script editor running a test script with a streaming execution log](Screenshots/Screenshot02.png) |
+
+---
+
+## Script editor documentation
+
+- [ScriptPad – User Guide](UITestForge/Documentation/ScriptPad-USER-GUIDE.md) — full walkthrough of the ScriptPad editor: writing, saving, and running scripts, syntax highlighting, flow control, and reporting.
+
+The editor also adds a custom context menu entry, **Run script** (right-click on desktop, long-press on touch):
+
+- With text selected, only the selection is executed.
+- With nothing selected, the current line is executed.
+
+This makes it easy to try out a single command or a small block without running the whole script.
+
+---
 
 ## How it works
 
