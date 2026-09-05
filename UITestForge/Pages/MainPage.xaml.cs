@@ -294,6 +294,25 @@ public partial class MainPage : ContentPage
 #endif
    }
 
+   // Width threshold (device-independent units) below which the lightweight
+   // EditorView replaces the full-featured ScriptPad.
+
+   private void OnEditorBorderSizeChanged(object? sender, EventArgs e)
+   {
+      // NOTE: do NOT measure borderEditor here. That border is content-sized, so
+      // ScriptPad and the editor header buttons impose a ~500px floor on its width
+      // and it never reports a "narrow" value. Use the page width instead.
+      if (scriptEditor.Width <= 0)
+         return;
+
+      bool isNarrow = scriptEditor.Width < 910;
+
+      Debug.WriteLine($"OnEditorBorderSizeChanged {scriptEditor.Width}");
+
+      ScriptEditor.IsVisible = isNarrow;
+      ScriptEditorView.IsVisible = !isNarrow; 
+   }
+
    private void OnScriptOutputBorderSizeChanged(object? sender, EventArgs e)
    {
       // ScrollView never stretches its content, so give the Editor an explicit

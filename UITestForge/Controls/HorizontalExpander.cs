@@ -105,10 +105,9 @@ public class HorizontalExpander : ContentView
       {
          FontAttributes = FontAttributes.Bold,
          FontSize = HeaderFontSize,
-         LineBreakMode = LineBreakMode.NoWrap,
+         LineBreakMode = LineBreakMode.TailTruncation,
          HorizontalOptions = LayoutOptions.Center,
          VerticalOptions = LayoutOptions.Center,
-         //Margin = new Thickness(0, 6, 0, 0),
       };
 
       _verticalHeader = new Grid
@@ -174,18 +173,31 @@ public class HorizontalExpander : ContentView
       Content = _root;
       UpdateHeaders();
 
-      SizeChanged += (_, _) => UpdateVerticalHeaderSize();
+      UpdateVerticalHeaderSize();
+   }
+
+   protected override void OnSizeAllocated(double width, double height)
+   {
+      base.OnSizeAllocated(width, height);
       UpdateVerticalHeaderSize();
    }
 
    /// <summary>
-   /// Sizes the rotated header strip in unrotated space so its text is never
-   /// measured against the (animated) width of the expander.
+   /// Sizes the rotated header strip in unrotated space. The strip is only as long as the
+   /// text actually needs, and never longer than the height currently available, so a
+   /// (possibly stale) height can never push the rotated strip outside the clip bounds.
    /// </summary>
    private void UpdateVerticalHeaderSize()
    {
-      _verticalHeader.WidthRequest = Height > 0 ? Height : 0;
-      _verticalHeader.HeightRequest = CollapsedWidth;
+      var available = Height > 0 ? Height : 0;
+      var thickness = Width > 0 ? Math.Min(CollapsedWidth, Width) : CollapsedWidth;
+
+      // Measure the label on its own; do not stretch the strip to the full expander height.
+      var textWidth = _verticalHeaderLabel
+         .Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
+
+      _verticalHeader.WidthRequest = available > 0 ? Math.Min(textWidth, available) : textWidth;
+      _verticalHeader.HeightRequest = thickness;
    }
 
    private void AddToggleGesture(View view)
@@ -208,6 +220,8 @@ public class HorizontalExpander : ContentView
 
       _horizontalHeaderLabel.Text = $"{arrow} {Header}";
       _verticalHeaderLabel.Text = $"{arrow} {Header}";
+
+      UpdateVerticalHeaderSize();
    }
 
 
@@ -234,13 +248,13 @@ public class HorizontalExpander : ContentView
 
             // Hand the width back to the parent layout (star sizing / fill).
             WidthRequest = -1;
-            await _expandedPanel.FadeTo(1, duration / 2);
+            await _expandedPanel.FadeToAsync(1, duration / 2);
          }
          else
          {
             if (Width > CollapsedWidth) _lastExpandedWidth = Width;
 
-            await _expandedPanel.FadeTo(0, duration / 2);
+            await _expandedPanel.FadeToAsync(0, duration / 2);
             _expandedPanel.IsVisible = false;
             _verticalHeader.IsVisible = true;
             HorizontalOptions = LayoutOptions.Start;

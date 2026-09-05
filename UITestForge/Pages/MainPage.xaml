@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage 
-xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-xmlns:edit="clr-namespace:ZPF.Maui.Script;assembly=ScriptPad"
-xmlns:ctrl="clr-namespace:UITestForge.Controls"
-   
-x:Class="UITestForge.MainPage"
-Title="DevFlow Monitor">
+   xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+   xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+   xmlns:edit="clr-namespace:ZPF.Maui.Script;assembly=ScriptPad"
+   xmlns:ctrl="clr-namespace:UITestForge.Controls"
+   x:Name="thisPage"
+   x:Class="UITestForge.MainPage"
+   Title="DevFlow Monitor">
 
-   <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="0" RowSpacing="8">
+   <Grid x:Name="mainGrid" RowDefinitions="Auto,Auto,*,Auto" Padding="0" RowSpacing="8">
 
       <!-- Row 0: Monitor start/stop controls -->
       <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
@@ -338,6 +338,7 @@ Title="DevFlow Monitor">
 
          <!-- Col 2: Script editor -->
          <Border x:Name="scriptEditor" Grid.Column="2" 
+               SizeChanged="OnEditorBorderSizeChanged"
                  Padding="5"
                  BackgroundColor="{AppThemeBinding Light=#Fddd, Dark=#1E1E1E}" >
             <Border.StrokeShape>
@@ -350,7 +351,7 @@ Title="DevFlow Monitor">
             <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="4">
 
                <!-- Header -->
-               <Grid ColumnDefinitions="*,Auto,Auto" Grid.Row="0" ColumnSpacing="6">
+               <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" Grid.Row="0" ColumnSpacing="6">
 
                   <Label Grid.Row="0"
                       Text="📝 Script Editor"
@@ -376,10 +377,24 @@ Title="DevFlow Monitor">
                                ToolTipProperties.Text="Open the script editor in a separate page"
                                Clicked="OnPopoutClicked" />
 
+                  <Button x:Name="ScriptClearBtn"
+                          Grid.Column="3"
+                          Text="🗑 Clear"
+                          FontSize="12"
+                          Padding="8,4"
+                          Clicked="OnScriptClearClicked" />
+
+                  <Button x:Name="ScriptRunBtn"
+                          Grid.Column="4"
+                          Text="▶ Run"
+                          FontSize="12"
+                          Padding="8,4"
+                          Clicked="OnScriptRunClicked" />
+
                </Grid>
 
                <!-- Script text editor -->
-               <Border Grid.Row="2"
+               <Border x:Name="borderEditor" Grid.Row="2"
                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
                        StrokeThickness="1"
                        Stroke="{AppThemeBinding Light=LightGray, Dark=#444}">
@@ -387,54 +402,23 @@ Title="DevFlow Monitor">
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
 
-                  <!--<Editor x:Name="ScriptEditor"
-                          FontFamily="Courier New"
-                          FontSize="13"
-                          Placeholder="# Write your devflow script here&#x0a;# Available commands: tap, fill, clear, focus, navigate, scroll, screenshot&#x0a;# Example:&#x0a;tap MyButton&#x0a;fill MyEntry Hello&#x0a;screenshot"
-                          AutoSize="TextChanges"
-                          VerticalOptions="Fill"
-                          IsSpellCheckEnabled="False"
-                          Margin="4" />-->
-
-                  <edit:ScriptPad x:Name="ScriptEditor" 
-                       WordWrap="False"
+                  <Grid>
+                     <edit:ScriptPad x:Name="ScriptEditor" 
+                       WordWrap="False" IsVisible="True"
                        ShowLineNumbers="True"
                        EditorFontSize="13"
                        VerticalOptions="Fill"
                        HorizontalOptions="Fill" />
 
+                     <edit:EditorView x:Name="ScriptEditorView" IsVisible="False" />
+                  </Grid>
+
                </Border>
 
                <!-- Run / Clear buttons -->
-               <Grid Grid.Row="3" RowDefinitions="auto,auto" ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,2,0,0">
-
-                  <Button x:Name="ScriptLoadBtn"
-                          Grid.Column="0"
-                          Text="📂 Load"
-                          FontSize="12"
-                          Padding="8,4"
-                          Clicked="OnScriptLoadClicked" />
-                  <Button x:Name="ScriptSaveBtn"
-                          Grid.Column="1"
-                          Text="💾 Save"
-                          FontSize="12"
-                          Padding="8,4"
-                          Clicked="OnScriptSaveClicked" />
-                  <Button x:Name="ScriptClearBtn"
-                          Grid.Column="2"
-                          Text="🗑 Clear"
-                          FontSize="12"
-                          Padding="8,4"
-                          Clicked="OnScriptClearClicked" />
-                  <Button x:Name="ScriptRunBtn"
-                          Grid.Column="3"
-                          Text="▶ Run"
-                          FontSize="12"
-                          Padding="8,4"
-                          Clicked="OnScriptRunClicked" />
+               <Grid Grid.Row="3" ColumnSpacing="6" Margin="0,2,0,0">
 
                   <Label x:Name="ScriptStatusLabel"
-                         Grid.Row="1" Grid.ColumnSpan="4"
                          Text="{Binding ScriptStatusText}"
                          VerticalOptions="Center"
                          FontSize="12"
