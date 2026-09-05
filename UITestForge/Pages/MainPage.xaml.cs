@@ -57,6 +57,14 @@ public partial class MainPage : ContentPage
       //EditorCtl.Highlighter = new MarkdownHighlighter();     // or PlainTextHighlighter / your own
    }
 
+   // ── Collapsible panels ──────────────────────────────────────────────────────
+
+   private void OnScreenshotExpandedChanged(object? sender, bool expanded)
+      => ScreenshotColumn.Width = expanded ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+
+   private void OnTreeviewExpandedChanged(object? sender, bool expanded)
+      => TreeviewColumn.Width = expanded ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+
    private void OnAgentsCollectionChanged(object? sender, EventArgs e)
    {
       // MAUI's Picker doesn't always sync its dropdown list when the bound

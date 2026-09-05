@@ -3,6 +3,7 @@
 xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
 xmlns:edit="clr-namespace:ZPF.Maui.Script;assembly=ScriptPad"
+xmlns:ctrl="clr-namespace:UITestForge.Controls"
    
 x:Class="UITestForge.MainPage"
 Title="DevFlow Monitor">
@@ -115,10 +116,16 @@ Title="DevFlow Monitor">
       </Grid>
 
       <!-- Row 2: 3-column panel — screenshot | tree | node detail -->
-      <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="12" Margin="10,0,10,10">
+      <Grid Grid.Row="2" ColumnSpacing="12" Margin="10,0,10,10">
+         <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="ScreenshotColumn" Width="*" />
+            <ColumnDefinition x:Name="TreeviewColumn" Width="*" />
+            <ColumnDefinition Width="*" />
+         </Grid.ColumnDefinitions>
 
          <!-- Col 0: Screenshot image -->
-         <Border Grid.Column="0" 
+
+         <Border 
                  Padding="10"
                  BackgroundColor="{AppThemeBinding Light=#Fddd, Dark=#1E1E1E}" >
             <Border.StrokeShape>
@@ -128,22 +135,29 @@ Title="DevFlow Monitor">
                <Shadow Brush="Black" Opacity="0.3" Radius="4" Offset="0,2"/>
             </Border.Shadow>
 
-            <Grid>
-               <Image x:Name="ScreenshotImage"
+            <ctrl:HorizontalExpander x:Name="ScreenshotExpander"
+                                  Grid.Column="0"
+                                  Header="Screenshot"
+                                  CollapsedWidth="25"
+                                  IsExpanded="True"
+                                  ExpandedChanged="OnScreenshotExpandedChanged">
+
+               <Grid>
+                  <Image x:Name="ScreenshotImage"
                    IsVisible="{Binding ScreenshotImageVisible}"
                    Aspect="AspectFit"
                    HorizontalOptions="Fill"
                    VerticalOptions="Fill">
-                  <FlyoutBase.ContextFlyout>
-                     <MenuFlyout>
-                        <MenuFlyoutItem Text="Copy to Clipboard"
+                     <FlyoutBase.ContextFlyout>
+                        <MenuFlyout>
+                           <MenuFlyoutItem Text="Copy to Clipboard"
                                         Clicked="OnCopyScreenshotClicked" />
-                     </MenuFlyout>
-                  </FlyoutBase.ContextFlyout>
-               </Image>
+                        </MenuFlyout>
+                     </FlyoutBase.ContextFlyout>
+                  </Image>
 
-               <!-- Refresh button overlay -->
-               <Button x:Name="ScreenshotRefreshBtn"
+                  <!-- Refresh button overlay -->
+                  <Button x:Name="ScreenshotRefreshBtn"
                        Text="↻"
                        FontSize="24"
                        FontAttributes="Bold"
@@ -162,8 +176,8 @@ Title="DevFlow Monitor">
                        IsVisible="{Binding ScreenshotRefreshButtonVisible}"
                        Command="{Binding TakeScreenshotCommand}"
                        ToolTipProperties.Text="Refresh screenshot" />
-            </Grid>
-
+               </Grid>
+            </ctrl:HorizontalExpander>
          </Border>
 
          <!-- Col 1: Hierarchical tree view -->
@@ -177,123 +191,129 @@ Title="DevFlow Monitor">
                <Shadow Brush="Black" Opacity="0.3" Radius="4" Offset="0,2"/>
             </Border.Shadow>
 
-            <Grid x:Name="TreeColumn" RowDefinitions="*,auto"
+            <ctrl:HorizontalExpander x:Name="TreeviewExpander"
+                                  Header="Visual Tree"
+                                  IsExpanded="True"
+                                  CollapsedWidth="25"
+                                  ExpandedChanged="OnTreeviewExpandedChanged">
+
+               <Grid x:Name="TreeColumn" RowDefinitions="*,auto"
                RowSpacing="4"
                IsVisible="{Binding TreeColumnVisible}" >
 
-               <!-- Tree node list -->
-               <CollectionView x:Name="TreeView"
+                  <!-- Tree node list -->
+                  <CollectionView x:Name="TreeView"
                             ItemSizingStrategy="MeasureAllItems"
                             Grid.Row="0"
                             ItemsSource="{Binding TreeItems}"
                             SelectionMode="Single"
                             SelectionChanged="OnTreeNodeSelected"
                             EmptyView="Tree not loaded — Select an agent">
-                  <CollectionView.ItemTemplate>
-                     <DataTemplate>
-                        <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
+                     <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                           <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
                               ColumnSpacing="3"
                               Padding="{Binding IndentPadding}"
                               HeightRequest="26">
-                           <Grid.GestureRecognizers>
-                              <TapGestureRecognizer NumberOfTapsRequired="2"
+                              <Grid.GestureRecognizers>
+                                 <TapGestureRecognizer NumberOfTapsRequired="2"
                                                       CommandParameter="{Binding}"
                                                       Tapped="OnTreeNodeDoubleTapped" />
-                           </Grid.GestureRecognizers>
+                              </Grid.GestureRecognizers>
 
-                           <!-- Expand / collapse toggle -->
-                           <Label Grid.Column="0"
+                              <!-- Expand / collapse toggle -->
+                              <Label Grid.Column="0"
                                Text="{Binding ExpandIcon}"
                                FontSize="13"
                                WidthRequest="16"
                                VerticalOptions="Center">
-                              <Label.GestureRecognizers>
-                                 <TapGestureRecognizer CommandParameter="{Binding}"
+                                 <Label.GestureRecognizers>
+                                    <TapGestureRecognizer CommandParameter="{Binding}"
                                                     Tapped="OnExpandToggled" />
-                              </Label.GestureRecognizers>
-                           </Label>
+                                 </Label.GestureRecognizers>
+                              </Label>
 
-                           <!-- Type icon -->
-                           <Label Grid.Column="1"
+                              <!-- Type icon -->
+                              <Label Grid.Column="1"
                                Text="{Binding TypeIcon}"
                                FontSize="12"
                                VerticalOptions="Center" />
 
-                           <!-- Short type name -->
-                           <Label Grid.Column="2"
+                              <!-- Short type name -->
+                              <Label Grid.Column="2"
                                Text="{Binding DisplayType}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="{AppThemeBinding Light=#0066CC, Dark=#66AAFF}"
                                VerticalOptions="Center" />
 
-                           <!-- AutomationId / text / empty -->
-                           <Label Grid.Column="3"
+                              <!-- AutomationId / text / empty -->
+                              <Label Grid.Column="3"
                                Text="{Binding DisplayLabel}"
                                FontSize="11"
                                TextColor="{AppThemeBinding Light=#555555, Dark=#AAAAAA}"
                                LineBreakMode="TailTruncation"
                                VerticalOptions="Center" />
 
-                           <!-- "hidden" badge -->
-                           <Label Grid.Column="4"
+                              <!-- "hidden" badge -->
+                              <Label Grid.Column="4"
                                Text="hidden"
                                FontSize="9"
                                TextColor="Gray"
                                VerticalOptions="Center"
                                HorizontalOptions="End"
                                IsVisible="{Binding IsHiddenNode}" />
-                        </Grid>
-                     </DataTemplate>
-                  </CollectionView.ItemTemplate>
-               </CollectionView>
+                           </Grid>
+                        </DataTemplate>
+                     </CollectionView.ItemTemplate>
+                  </CollectionView>
 
-               <!-- Selected-node detail panel -->
-               <!-- Row 1: Node detail panel -->
-               <Border x:Name="NodeDetailFrame"
+                  <!-- Selected-node detail panel -->
+                  <!-- Row 1: Node detail panel -->
+                  <Border x:Name="NodeDetailFrame"
                     Grid.Row="1"
                     Padding="10"
                     StrokeThickness="0"
                   BackgroundColor="{AppThemeBinding Light=#D5DBEB, Dark=#1A2035}"
                   IsVisible="{Binding NodeDetailFrameVisible}">
-                  <Border.StrokeShape>
-                     <RoundRectangle CornerRadius="8"/>
-                  </Border.StrokeShape>
-                  <Border.Shadow>
-                     <Shadow Brush="Black" Opacity="0.2" Radius="8" Offset="0,2"/>
-                  </Border.Shadow>
+                     <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                     </Border.StrokeShape>
+                     <Border.Shadow>
+                        <Shadow Brush="Black" Opacity="0.2" Radius="8" Offset="0,2"/>
+                     </Border.Shadow>
 
-                  <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
-                     <Label Grid.Row="0"
+                     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
+                        <Label Grid.Row="0"
                          Text="{Binding SelectedTreeNode.FullTypeLabel}"
                          FontAttributes="Bold"
                          FontSize="12" />
-                     <Label Grid.Row="1"
+                        <Label Grid.Row="1"
                          Text="{Binding SelectedTreeNode.IdLabel}"
                          FontSize="10"
                          TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                     <Label Grid.Row="2"
+                        <Label Grid.Row="2"
                          Text="{Binding SelectedTreeNode.AutomationIdLabel}"
                          FontSize="11"
                          IsVisible="{Binding SelectedTreeNode.HasAutomationId}" />
-                     <Label Grid.Row="3"
+                        <Label Grid.Row="3"
                          Text="{Binding SelectedTreeNode.TextLabel}"
                          FontSize="11"
                          IsVisible="{Binding SelectedTreeNode.HasText}" />
-                     <Label Grid.Row="4"
+                        <Label Grid.Row="4"
                          Text="{Binding SelectedTreeNode.BoundsLabel}"
                          FontSize="10"
                          TextColor="{AppThemeBinding Light=DimGray, Dark=Silver}" />
-                     <Label Grid.Row="5"
+                        <Label Grid.Row="5"
                          Text="{Binding SelectedTreeNode.StateLabel}"
                          FontSize="10"
                          TextColor="{AppThemeBinding Light=DimGray, Dark=Silver}" />
-                  </Grid>
+                     </Grid>
 
-               </Border>
+                  </Border>
 
-               <!-- Refresh button overlay -->
-               <Button x:Name="TreeViewRefreshBtn"
+                  <!-- Refresh button overlay -->
+                  <Button x:Name="TreeViewRefreshBtn"
                        Text="↻"
                        FontSize="24"
                        FontAttributes="Bold"
@@ -312,7 +332,8 @@ Title="DevFlow Monitor">
                        IsVisible="{Binding TreeViewRefreshButtonVisible}"
                        Command="{Binding RefreshTreeCommand}"
                        ToolTipProperties.Text="Refresh TreeView" />
-            </Grid>
+               </Grid>
+            </ctrl:HorizontalExpander>
          </Border>
 
          <!-- Col 2: Script editor -->
@@ -345,8 +366,8 @@ Title="DevFlow Monitor">
                        HorizontalOptions="End"
                                Clicked="OnShowSyntaxHelperClicked" />
 
-                          <!-- Popout Button -->
-                          <Button x:Name="PopoutBtn"
+                  <!-- Popout Button -->
+                  <Button x:Name="PopoutBtn"
                                Grid.Column="2"
                                Text="🗗 Popout"
                                FontSize="11"
@@ -355,7 +376,7 @@ Title="DevFlow Monitor">
                                ToolTipProperties.Text="Open the script editor in a separate page"
                                Clicked="OnPopoutClicked" />
 
-                       </Grid>
+               </Grid>
 
                <!-- Script text editor -->
                <Border Grid.Row="2"
@@ -365,7 +386,7 @@ Title="DevFlow Monitor">
                   <Border.StrokeShape>
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
-                  
+
                   <!--<Editor x:Name="ScriptEditor"
                           FontFamily="Courier New"
                           FontSize="13"
@@ -381,7 +402,7 @@ Title="DevFlow Monitor">
                        EditorFontSize="13"
                        VerticalOptions="Fill"
                        HorizontalOptions="Fill" />
-                  
+
                </Border>
 
                <!-- Run / Clear buttons -->
@@ -432,10 +453,10 @@ Title="DevFlow Monitor">
                      <RoundRectangle CornerRadius="4" />
                   </Border.StrokeShape>
 
-                     <ScrollView Orientation="Both"
+                  <ScrollView Orientation="Both"
                                  HorizontalScrollBarVisibility="Always"
                                  VerticalScrollBarVisibility="Always">
-                        <Editor x:Name="ScriptOutputLabel"
+                     <Editor x:Name="ScriptOutputLabel"
                               FontFamily="Courier New"
                               FontSize="11"
                               IsSpellCheckEnabled="False"
@@ -447,8 +468,8 @@ Title="DevFlow Monitor">
                               AutoSize="TextChanges"
                               Text="{Binding ScriptOutputText}"
                               Placeholder="(output will appear here)" />
-                     </ScrollView>
-                  </Border>
+                  </ScrollView>
+               </Border>
 
             </Grid>
 
