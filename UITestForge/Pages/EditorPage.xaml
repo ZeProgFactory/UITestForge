@@ -3,7 +3,6 @@
    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
    xmlns:edit="clr-namespace:ZPF.Maui.Script;assembly=ScriptPad"
-   xmlns:controls="clr-namespace:ZPF.Maui.Script.Controls;assembly=ScriptPad"
 
    x:Class="ScriptPad.Sample.EditorPage">
 
@@ -29,7 +28,7 @@
       </Border>
 
       <!-- File Explorer -->
-      <controls:FileExplorerTreeView Grid.Column="0" Grid.Row="1" 
+      <edit:FileExplorerTreeView Grid.Column="0" Grid.Row="1" 
                                       x:Name="FileExplorer"
                                       RootPath=""
                                       FileExtensions="*"

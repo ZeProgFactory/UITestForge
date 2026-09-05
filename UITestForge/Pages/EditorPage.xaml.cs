@@ -1,5 +1,4 @@
 ﻿using ZPF.Maui.Script;
-using ZPF.Maui.Script.Controls;
 using ZPF.Maui.Script.ScriptEditing;
 
 namespace ScriptPad.Sample
