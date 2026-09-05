@@ -49,6 +49,13 @@ public partial class MainPage : ContentPage
                   //run the script in the editor, or just the selected text if any.
                   await RunScriptAsync(script);
                });
+
+            ScriptEditorView.RootPath = _viewModel.Config.ScriptFolder;
+            ScriptEditorView.Highlighter = new UITestForgeScriptHighlighter();
+            ScriptEditorView.Text = ScriptEditor.Text ?? string.Empty;
+            ScriptEditorView.FileName = _viewModel.Config.LastScript;
+            ScriptEditorView.CaretPosition = ScriptEditor.GetCaret();
+            ScriptEditorView.IsModified = ScriptEditor.IsModified;
          }
       };
 
@@ -221,19 +228,6 @@ public partial class MainPage : ContentPage
       this.ShowPopup(popup);
    }
 
-   private async void OnPopoutClicked(object? sender, EventArgs e)
-   {
-      var editorPage = new ScriptPad.Sample.EditorPage();
-
-      editorPage.RootPath = _viewModel.Config.ScriptFolder;
-      editorPage.Highlighter = new UITestForgeScriptHighlighter();
-      editorPage.Text = ScriptEditor.Text ?? string.Empty;
-      editorPage.FileName = _viewModel.Config.LastScript;
-      editorPage.CaretPosition = ScriptEditor.GetCaret();
-      editorPage.IsModified = ScriptEditor.IsModified;
-
-      await Navigation.PushAsync(editorPage);
-   }
 
    private async void OnScriptRunClicked(object? sender, EventArgs e)
    {
@@ -305,12 +299,30 @@ public partial class MainPage : ContentPage
       if (scriptEditor.Width <= 0)
          return;
 
-      bool isNarrow = scriptEditor.Width < 910;
+      bool isNarrow = scriptEditor.Width < 710;
 
       Debug.WriteLine($"OnEditorBorderSizeChanged {scriptEditor.Width}");
 
       ScriptEditor.IsVisible = isNarrow;
-      ScriptEditorView.IsVisible = !isNarrow; 
+      ScriptEditorView.IsVisible = !isNarrow;
+
+      if (!isNarrow)
+      {
+         ScriptEditorView.RootPath = _viewModel.Config.ScriptFolder;
+         ScriptEditorView.Highlighter = new UITestForgeScriptHighlighter();
+         ScriptEditorView.Text = ScriptEditor.Text ?? string.Empty;
+         ScriptEditorView.FileName = _viewModel.Config.LastScript;
+         ScriptEditorView.CaretPosition = ScriptEditor.GetCaret();
+         ScriptEditorView.IsModified = ScriptEditor.IsModified;
+      }
+      else
+      {
+         ScriptEditor.Highlighter = new UITestForgeScriptHighlighter();
+         ScriptEditor.Text = ScriptEditorView.Text ?? string.Empty;
+         ScriptEditor.FileName = _viewModel.Config.LastScript;
+         ScriptEditor.SetCaret(ScriptEditorView.CaretPosition);
+         ScriptEditor.IsModified = ScriptEditorView.IsModified;
+      }
    }
 
    private void OnScriptOutputBorderSizeChanged(object? sender, EventArgs e)

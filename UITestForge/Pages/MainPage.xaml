@@ -339,8 +339,9 @@
          <!-- Col 2: Script editor -->
          <Border x:Name="scriptEditor" Grid.Column="2" 
                SizeChanged="OnEditorBorderSizeChanged"
-                 Padding="5"
-                 BackgroundColor="{AppThemeBinding Light=#Fddd, Dark=#1E1E1E}" >
+               Padding="5"
+               MinimumWidthRequest="380"
+               BackgroundColor="{AppThemeBinding Light=#Fddd, Dark=#1E1E1E}" >
             <Border.StrokeShape>
                <RoundRectangle CornerRadius="8"/>
             </Border.StrokeShape>
@@ -366,16 +367,6 @@
                        FontSize="11"
                        HorizontalOptions="End"
                                Clicked="OnShowSyntaxHelperClicked" />
-
-                  <!-- Popout Button -->
-                  <Button x:Name="PopoutBtn"
-                               Grid.Column="2"
-                               Text="🗗 Popout"
-                               FontSize="11"
-                               AutomationId="PopoutBtn"
-                               HorizontalOptions="End"
-                               ToolTipProperties.Text="Open the script editor in a separate page"
-                               Clicked="OnPopoutClicked" />
 
                   <Button x:Name="ScriptClearBtn"
                           Grid.Column="3"
