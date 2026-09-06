@@ -8,6 +8,23 @@
    x:Class="UITestForge.MainPage"
    Title="DevFlow Monitor">
 
+   <ContentPage.Resources>
+      <ResourceDictionary>
+         <Style x:Key="ToolBarButton" TargetType="Button">
+            <Setter Property="TextColor" Value="Black"/>
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <Setter Property="MinimumHeightRequest" Value="24"/>
+            <Setter Property="MinimumWidthRequest" Value="24"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="BorderColor" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+         </Style>
+      </ResourceDictionary>
+   </ContentPage.Resources>
+
    <Grid x:Name="mainGrid" RowDefinitions="Auto,Auto,*,Auto" Padding="0" RowSpacing="8">
 
       <!-- Row 0: Monitor start/stop controls -->
@@ -340,7 +357,7 @@
          <Border x:Name="scriptEditor" Grid.Column="2" 
                SizeChanged="OnEditorBorderSizeChanged"
                Padding="5"
-               MinimumWidthRequest="380"
+               MinimumWidthRequest="250"
                BackgroundColor="{AppThemeBinding Light=#Fddd, Dark=#1E1E1E}" >
             <Border.StrokeShape>
                <RoundRectangle CornerRadius="8"/>
@@ -352,7 +369,7 @@
             <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="4">
 
                <!-- Header -->
-               <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" Grid.Row="0" ColumnSpacing="6">
+               <Grid Grid.Row="0" ColumnSpacing="6">
 
                   <Label Grid.Row="0"
                       Text="📝 Script Editor"
@@ -360,28 +377,6 @@
                       FontSize="14"
                       VerticalOptions="Center"
                       Margin="0,0,0,2" />
-
-                  <!-- Syntax Helper Button -->
-                  <Button Grid.Column="1"
-                       Text="📖 Syntax Helper"
-                       FontSize="11"
-                       HorizontalOptions="End"
-                               Clicked="OnShowSyntaxHelperClicked" />
-
-                  <Button x:Name="ScriptClearBtn"
-                          Grid.Column="3"
-                          Text="🗑 Clear"
-                          FontSize="12"
-                          Padding="8,4"
-                          Clicked="OnScriptClearClicked" />
-
-                  <Button x:Name="ScriptRunBtn"
-                          Grid.Column="4"
-                          Text="▶ Run"
-                          FontSize="12"
-                          Padding="8,4"
-                          Clicked="OnScriptRunClicked" />
-
                </Grid>
 
                <!-- Script text editor -->
@@ -407,7 +402,7 @@
                </Border>
 
                <!-- Run / Clear buttons -->
-               <Grid Grid.Row="3" ColumnSpacing="6" Margin="0,2,0,0">
+               <Grid Grid.Row="3" ColumnDefinitions="*,auto,auto,auto,auto,auto" Margin="0,2,0,0">
 
                   <Label x:Name="ScriptStatusLabel"
                          Text="{Binding ScriptStatusText}"
@@ -415,6 +410,45 @@
                          FontSize="12"
                          TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                          LineBreakMode="TailTruncation" />
+
+                  <Button x:Name="ScriptLoadBtn"
+                          Grid.Column="1"
+                          Text="&#x0001F5C1;"
+                          ToolTipProperties.Text="Load script"
+                          Style="{StaticResource ToolBarButton}"
+                          Clicked="OnScriptLoadClicked" />
+
+                  <Button x:Name="ScriptSaveBtn"
+                          Grid.Column="2"
+                          Text="&#x0001F5AB;"
+                          ToolTipProperties.Text="Save script"
+                          Style="{StaticResource ToolBarButton}"
+                          Clicked="OnScriptSaveClicked" />
+
+                  <Button x:Name="ScriptClearBtn"
+                          Grid.Column="3"
+                          Margin="10,0,0,0"
+                          Text="&#x2715;"
+                          ToolTipProperties.Text="Clear"
+                          Style="{StaticResource ToolBarButton}"
+                          Clicked="OnScriptClearClicked" />
+
+                  <Button x:Name="ScriptRunBtn"
+                          Grid.Column="4"
+                          Margin="10,0,0,0"
+                          Text="&#x25B6;&#xFE0E;"
+                          ToolTipProperties.Text="Run"
+                          Style="{StaticResource ToolBarButton}"
+                          Clicked="OnScriptRunClicked" />
+
+                  <!-- Syntax Helper Button -->
+                  <Button x:Name="ScriptHelpBtn"
+                          Grid.Column="5"
+                          Text="&#x003F;"
+                          ToolTipProperties.Text="Syntax Helper"
+                          Style="{StaticResource ToolBarButton}"
+                          Clicked="OnShowSyntaxHelperClicked" />
+
                </Grid>
 
                <!-- Output log -->
@@ -429,8 +463,9 @@
                   </Border.StrokeShape>
 
                   <ScrollView Orientation="Both"
-                                 HorizontalScrollBarVisibility="Always"
-                                 VerticalScrollBarVisibility="Always">
+                        HorizontalScrollBarVisibility="Always"
+                        VerticalScrollBarVisibility="Always">
+                     
                      <Editor x:Name="ScriptOutputLabel"
                               FontFamily="Courier New"
                               FontSize="11"

@@ -176,12 +176,9 @@ string.Empty;
 
             if (result != null)
             {
-               using var stream = await result.OpenReadAsync();
-               using var reader = new StreamReader(stream);
-               var content = await reader.ReadToEndAsync();
-
                // Set the text, then take it as the new unmodified baseline
-               EditorCtl.Text = content;
+               await EditorCtl.LoadFileAsync(result.FullPath);
+
                EditorCtl.IsModified = false;
                UpdateModifiedStatus(); // This will now show as not modified
 
