@@ -123,7 +123,53 @@ public partial class MainPage : ContentPage
       => ScreenshotColumn.Width = expanded ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
 
    private void OnTreeviewExpandedChanged(object? sender, bool expanded)
-      => TreeviewColumn.Width = expanded ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+      => UpdateTreeviewColumnWidth();
+
+   private void OnPanelGridSizeChanged(object? sender, EventArgs e)
+      => UpdateTreeviewColumnWidth();
+
+   /// <summary>
+   /// Keeps the tree column star-sized while it still fits, and switches it to
+   /// Auto once its share of the panel would exceed <see cref="VisualElement.MaximumWidthRequest"/>
+   /// of <c>TreeviewBorder</c> (extra space then goes to the other columns).
+   /// </summary>
+   private void UpdateTreeviewColumnWidth()
+   {
+      if (!TreeviewExpander.IsExpanded)
+      {
+         TreeviewColumn.Width = GridLength.Auto;
+         return;
+      }
+
+      double max = TreeviewBorder.MaximumWidthRequest;
+      double available = PanelGrid.Width;
+
+      if (max <= 0 || available <= 0)
+      {
+         TreeviewColumn.Width = new GridLength(1, GridUnitType.Star);
+         return;
+      }
+
+      // Count star columns and subtract the space taken by the auto (collapsed) ones.
+      int starColumns = 0;
+      double usedByAuto = 0;
+      foreach (ColumnDefinition column in PanelGrid.ColumnDefinitions)
+      {
+         if (column.Width.IsStar)
+            starColumns++;
+         else
+            usedByAuto += column.Width.IsAbsolute ? column.Width.Value : 25; // collapsed expander width
+      }
+
+      double spacing = PanelGrid.ColumnSpacing * Math.Max(0, PanelGrid.ColumnDefinitions.Count - 1);
+      double perStar = starColumns > 0
+         ? (available - usedByAuto - spacing) / starColumns
+         : available;
+
+      TreeviewColumn.Width = perStar >= max
+         ? new GridLength(max, GridUnitType.Absolute)
+         : new GridLength(1, GridUnitType.Star);
+   }
 
    private void OnAgentsCollectionChanged(object? sender, EventArgs e)
    {
@@ -193,6 +239,22 @@ public partial class MainPage : ContentPage
    }
 
    // ── Script Editor ───────────────────────────────────────────────────────────
+
+   private async void OnScriptMenuClicked(object? sender, EventArgs e)
+   {
+      var choice = await DisplayActionSheet("Script", "Cancel", null, "Load script…", "Save script…");
+
+      switch (choice)
+      {
+         case "Load script…":
+            OnScriptLoadClicked(sender, e);
+            break;
+
+         case "Save script…":
+            OnScriptSaveClicked(sender, e);
+            break;
+      }
+   }
 
    private async void OnScriptLoadClicked(object? sender, EventArgs e)
    {
@@ -268,6 +330,8 @@ public partial class MainPage : ContentPage
    private void OnScriptClearClicked(object? sender, EventArgs e)
    {
       ScriptEditor.Text = string.Empty;
+      ScriptEditorView.Text = string.Empty;
+
       _viewModel.ClearScript();
    }
 
@@ -280,7 +344,10 @@ public partial class MainPage : ContentPage
 
    private async void OnScriptRunClicked(object? sender, EventArgs e)
    {
-      await RunScriptAsync(ScriptEditor.Text ?? string.Empty);
+      // retrive scropt from current visible editor
+      var script = (ScriptEditor.IsVisible ? ScriptEditor.Text : ScriptEditorView.Text) ?? string.Empty;
+
+      await RunScriptAsync(script);
    }
 
    /// <summary>

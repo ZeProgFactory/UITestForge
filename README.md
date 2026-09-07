@@ -76,6 +76,7 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 | Connect & inspect | Script editor help |
 |---|---|
 | ![UITestForge connected to a running app, showing the visual tree inspector](Screenshots/Screenshot01.png) | ![UITestForge script editor running a test script with a streaming execution log](Screenshots/Screenshot02.png) |
+| ![UITestForge connected to a running app, showing the visual tree inspector](Screenshots/Screenshot03.png)  |
 
 ---
 

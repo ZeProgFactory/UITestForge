@@ -14,7 +14,13 @@ public partial class MainViewModel : ObservableObject
 {
    private const int PollIntervalMs = 5_000;
 
+   // Manual refresh retry policy
+   private const int RefreshRetryIntervalMs = 3_000;
+   private const int RefreshMaxDurationMs = 30_000;
+   private const int RefreshGraceAfterFirstAgentMs = 6_000;
+
    private CancellationTokenSource? _cts;
+   private CancellationTokenSource? _refreshCts;
    private bool _isRefreshing;
 
    // Observable Collections
@@ -193,13 +199,71 @@ public partial class MainViewModel : ObservableObject
 
    // ── Monitor Commands ────────────────────────────────────────────────────────
 
+   /// <summary>
+   /// Manual refresh: retries every 3 s for up to 30 s while no agent is found.
+   /// Once the first new agent shows up, keeps polling for 6 more seconds so that
+   /// agents that connect slightly later are picked up too.
+   /// </summary>
    [RelayCommand]
    private async Task RefreshAgentsAsync()
    {
+      // A second press cancels the running retry loop and restarts it.
+      _refreshCts?.Cancel();
+      _refreshCts?.Dispose();
+      using var cts = new CancellationTokenSource();
+      _refreshCts = cts;
+      var token = cts.Token;
+
       try
       {
          IsBusy = true;
-         StatusText = "Refreshing agents...";
+
+         var started = DateTime.UtcNow;
+         DateTime? firstAgentSeen = null;
+
+         while (!token.IsCancellationRequested)
+         {
+            var elapsed = DateTime.UtcNow - started;
+            await RefreshAgentsOnceAsync(elapsed);
+
+            if (Agents.Count > 0 && firstAgentSeen is null)
+               firstAgentSeen = DateTime.UtcNow;
+
+            // Stop when the grace period after the first agent has elapsed ...
+            if (firstAgentSeen is not null &&
+                (DateTime.UtcNow - firstAgentSeen.Value).TotalMilliseconds >= RefreshGraceAfterFirstAgentMs)
+               break;
+
+            // ... or when the overall timeout is reached.
+            if ((DateTime.UtcNow - started).TotalMilliseconds >= RefreshMaxDurationMs)
+               break;
+
+            try
+            {
+               await Task.Delay(RefreshRetryIntervalMs, token);
+            }
+            catch (OperationCanceledException)
+            {
+               break;
+            }
+         }
+      }
+      finally
+      {
+         IsBusy = false;
+
+         if (ReferenceEquals(_refreshCts, cts))
+            _refreshCts = null;
+      }
+   }
+
+   private async Task RefreshAgentsOnceAsync(TimeSpan elapsed)
+   {
+      try
+      {
+         StatusText = elapsed.TotalSeconds < 1
+            ? "Refreshing agents..."
+            : $"Refreshing agents... ({elapsed.TotalSeconds:F0}s)";
 
 #if !ANDROID
          await DevFlowCliHelper.EnsureBrokerStartedAsync();
@@ -283,13 +347,9 @@ public partial class MainViewModel : ObservableObject
          await MainThread.InvokeOnMainThreadAsync(() =>
              StatusText = $"Refresh error: {ex.Message}");
       }
-      finally
-      {
-         IsBusy = false;
-      }
    }
 
-   // ── Agent Selection ─────────────────────────────────────────────────────────
+   // ── Agent Selection 
 
    partial void OnSelectedAgentChanged(DevFlowAgent? value)
    {
@@ -390,6 +450,8 @@ public partial class MainViewModel : ObservableObject
             results.Add($"{serial}: {(line.Length > 0 ? line : "ok")}");
          }
          ActionStatusText = "ADB forward: " + string.Join(" | ", results);
+
+         await RefreshAgentsAsync();
       }
       catch (Exception ex)
       {

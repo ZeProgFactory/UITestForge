@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Reflection;
+using System.Text.Json;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using UITestForge;
 
 namespace UITestForge.Helpers
@@ -393,7 +396,7 @@ namespace UITestForge.Helpers
                {
                   resultLine = await HandleCreatePptxAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot, agent, scriptFolder);
                }
-                else if (cmd == "add-report-page")
+               else if (cmd == "add-report-page")
                {
                   resultLine = await HandleAddReportPageAsync(rest, scriptText, log.ToString(), firstScreenshot, lastScreenshot);
                }
@@ -475,12 +478,12 @@ namespace UITestForge.Helpers
                      : $"    \u2717 '{cmd}' failed{(detail.Length > 0 ? $": {detail}" : $" (exit code {exitCode})")}";
                }
 
-                     TrackResult(cmd, resultLine, checkedPageName);
-                     log.AppendLine(resultLine);
-                     onOutputUpdate(log.ToString());
-                  }
+               TrackResult(cmd, resultLine, checkedPageName);
+               log.AppendLine(resultLine);
+               onOutputUpdate(log.ToString());
+            }
 
-               return (stepNum, null);
+            return (stepNum, null);
          }
          catch (Exception ex)
          {
@@ -733,7 +736,7 @@ namespace UITestForge.Helpers
          try
          {
             // Check if a PPTX file is currently open
-            if (string.IsNullOrEmpty(PptxReportHelper.CurrentPPTXFile) || 
+            if (string.IsNullOrEmpty(PptxReportHelper.CurrentPPTXFile) ||
                 !File.Exists(PptxReportHelper.CurrentPPTXFile))
             {
                return Task.FromResult("    \u2717 No PPTX file open. Use 'create-pptx' first.");
@@ -760,50 +763,81 @@ namespace UITestForge.Helpers
          }
       }
 
-         /// <summary>
-         /// Handles the <c>addsummary</c> command to add a script execution summary page to the current PPTX.
-         /// Expected format: <c>addsummary [title]</c>. If title is omitted, uses: Execution Summary.
-         /// Includes total steps, successes/failures, execution duration, and checked pages.
-         /// </summary>
-         private static Task<string> HandleAddSummaryAsync(
-            string rest,
-            int totalSteps,
-            int successCount,
-            int failCount,
-            TimeSpan elapsed,
-            List<string> checkedPages)
+      /// <summary>
+      /// Handles the <c>addsummary</c> command to add a script execution summary page to the current PPTX.
+      /// Expected format: <c>addsummary [title]</c>. If title is omitted, uses: Execution Summary.
+      /// Includes total steps, successes/failures, execution duration, and checked pages.
+      /// </summary>
+      private static Task<string> HandleAddSummaryAsync(
+         string rest,
+         int totalSteps,
+         int successCount,
+         int failCount,
+         TimeSpan elapsed,
+         List<string> checkedPages)
+      {
+         try
          {
-            try
+            if (string.IsNullOrEmpty(PptxReportHelper.CurrentPPTXFile) ||
+                !File.Exists(PptxReportHelper.CurrentPPTXFile))
             {
-               if (string.IsNullOrEmpty(PptxReportHelper.CurrentPPTXFile) ||
-                   !File.Exists(PptxReportHelper.CurrentPPTXFile))
-               {
-                  return Task.FromResult("    \u2717 No PPTX file open. Use 'create-pptx' first.");
-               }
-
-               var title = !string.IsNullOrWhiteSpace(rest)
-                  ? rest.Trim('"')
-                  : "Execution Summary";
-
-               var summary = new System.Text.StringBuilder();
-               summary.AppendLine($"Total steps: {totalSteps}");
-               summary.AppendLine($"Succeeded: {successCount}");
-               summary.AppendLine($"Failed: {failCount}");
-               summary.AppendLine($"Duration: {elapsed:hh\\:mm\\:ss}");
-               summary.AppendLine();
-               summary.AppendLine(checkedPages.Count > 0 ? "Checked pages:" : "Checked pages: none");
-               foreach (var entry in checkedPages)
-                  summary.AppendLine($"  - {entry}");
-
-               PptxReportHelper.AddSummaryPage(summary.ToString(), title);
-
-               return Task.FromResult($"    \u2713 Summary page added to {Path.GetFileName(PptxReportHelper.CurrentPPTXFile)}");
+               return Task.FromResult("    \u2717 No PPTX file open. Use 'create-pptx' first.");
             }
-            catch (Exception ex)
+
+            var title = !string.IsNullOrWhiteSpace(rest)
+               ? rest.Trim('"')
+               : "Execution Summary";
+
+            var summary = new System.Text.StringBuilder();
+
+            // - - - context - - - 
+
+            #region - - - context - - - 
+
+            summary.AppendLine($"Context");
+            summary.AppendLine($"   • OSVersion: {Environment.OSVersion.ToString()}");
+
+            if (OperatingSystem.IsWindows())
             {
-               return Task.FromResult($"    \u2717 Failed to add summary page: {ex.Message}");
+               summary.AppendLine($"   • RuntimeVersion: {Environment.Version.ToString()}");
+
+               var ProcessorArchitecture = Environment.Is64BitOperatingSystem ? "x64" : "x86";
+               summary.AppendLine($"   • ProcessorArchitecture: {ProcessorArchitecture}");
+               summary.AppendLine($"   • MachineName: {Environment.MachineName}");
             }
+
+            summary.AppendLine($"   • UserName: {Environment.UserName}");
+
+            var ISOLanguageName = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToUpper();
+            summary.AppendLine($"   • ISOLanguageName: {ISOLanguageName}");
+            summary.AppendLine($"   • NumberFormat: {CultureInfo.CurrentUICulture.NumberFormat.NumberGroupSeparator}[{CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator}]");
+
+            #endregion
+
+            // - - -  - - - 
+
+            summary.AppendLine($"");
+            summary.AppendLine($"Script");
+
+            summary.AppendLine($"   • Total steps: {totalSteps}");
+            summary.AppendLine($"   • Succeeded: {successCount}");
+            summary.AppendLine($"   • Failed: {failCount}");
+            summary.AppendLine($"   • Duration: {elapsed:hh\\:mm\\:ss}");
+
+            summary.AppendLine();
+            summary.AppendLine(checkedPages.Count > 0 ? "Checked pages" : "Checked pages: none");
+            foreach (var entry in checkedPages)
+               summary.AppendLine($"   • {entry}");
+
+            PptxReportHelper.AddSummaryPage(summary.ToString(), title);
+
+            return Task.FromResult($"    \u2713 Summary page added to {Path.GetFileName(PptxReportHelper.CurrentPPTXFile)}");
+         }
+         catch (Exception ex)
+         {
+            return Task.FromResult($"    \u2717 Failed to add summary page: {ex.Message}");
          }
       }
-   #endif
    }
+#endif
+}
