@@ -15,6 +15,9 @@ namespace UITestForge;
 public partial class MainPage : ContentPage
 {
    private readonly MainViewModel _viewModel;
+   private bool _initialLoadDone;
+   private bool _editorModeInitialized;
+   private bool _lastEditorNarrow;
 
    public MainPage()
    {
@@ -31,6 +34,10 @@ public partial class MainPage : ContentPage
       // Wire up UI events
       this.Loaded += async (s, e) =>
       {
+         if (_initialLoadDone)
+            return;
+         _initialLoadDone = true;
+
          _viewModel.Load();
 
          if (System.IO.File.Exists(_viewModel.Config.LastScript))
@@ -418,6 +425,13 @@ public partial class MainPage : ContentPage
       bool isNarrow = scriptEditor.Width < 710;
 
       Debug.WriteLine($"OnEditorBorderSizeChanged {scriptEditor.Width}");
+
+      // Only sync content when the mode actually switches; otherwise a layout
+      // change would overwrite the visible editor with stale text.
+      if (_editorModeInitialized && _lastEditorNarrow == isNarrow)
+         return;
+      _editorModeInitialized = true;
+      _lastEditorNarrow = isNarrow;
 
       ScriptEditor.IsVisible = isNarrow;
       ScriptEditorView.IsVisible = !isNarrow;

@@ -27,7 +27,7 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
   - [`fill <automationId> <text>`](#fill-automationid-text)
   - [`clear <automationId>`](#clear-automationid)
   - [`focus <automationId>`](#focus-automationid)
-  - [`screenshot [path]`](#screenshot-path)
+  - [`screenshot [native] [path]`](#screenshot-native-path)
   - [`navigate <route>`](#navigate-route)
   - [`scroll down|up [px]`](#scroll-downup-px)
   - [`scroll <automationId>`](#scroll-automationid)
@@ -178,6 +178,7 @@ Colors follow the active editor theme (dark or light), so highlighting stays rea
 | `checknpage` | Check the current page (optionally branch if it does *not* match) |
 | `goto` | Jump to a label |
 | `wait` | Pause execution |
+| `swipeback` | Swipe from the left edge to go back (Android emulator / iOS simulator only) |
 | `create-pptx` | Generate a PowerPoint report of the run |
 | `add-report-page` | Add a before/log/after report page to the current PPTX |
 | `addsummary` | Add an execution summary page (steps, pass/fail, duration, checked pages) to the current PPTX |
@@ -209,11 +210,19 @@ Gives keyboard focus to a control.
 focus PasswordEntry
 ```
 
-### `screenshot [path]`
+### `screenshot [native] [path]`
 Captures a screenshot. If no path is given, a temporary file is generated automatically.
+
+With `native`, the screenshot is taken by the platform tooling instead of DevFlow (includes system UI and native dialogs).
+
+> **Restrictions for `native`:** Android emulator and iOS simulator only.
+> - Android uses `adb -s emulator-5554 shell screencap` + `adb pull` (requires the emulator to be `emulator-5554`).
+> - iOS uses `xcrun simctl io booted screenshot` (requires macOS with a booted simulator).
 ```
 screenshot
 screenshot before-login.png
+screenshot native
+screenshot native native-login.png
 ```
 
 ### `navigate <route>`
@@ -233,6 +242,16 @@ scroll up 500
 Scrolls a specific element into view.
 ```
 scroll SubmitBtn
+```
+
+### `swipeback`
+Performs a swipe-back gesture from the left screen edge.
+
+> **Restrictions:** Android emulator and iOS simulator only. Not supported on physical devices.
+> - Android runs `adb -s emulator-5554 shell input swipe 10 500 300 500` (requires the emulator to be `emulator-5554`).
+> - iOS runs `xcrun simctl io booted swipe 5 300 300 300` (requires macOS with a booted simulator).
+```
+swipeback
 ```
 
 ### `call <script-filename>`

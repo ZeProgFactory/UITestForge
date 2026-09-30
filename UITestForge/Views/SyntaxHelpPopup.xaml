@@ -84,9 +84,11 @@
                         <Span Text="&#x0a;"/>
 
                         <Span Text="screenshot" FontFamily="Consolas"/>
-                        <Span Text=" [" FontAttributes="Italic"/>
+                        <Span Text=" [native] [" FontAttributes="Italic"/>
                         <Span Text="&lt;path&gt;" FontAttributes="Italic"/>
                         <Span Text="]" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="  native: uses adb / xcrun (Android emulator / iOS simulator only)" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
                         <Span Text="tap " FontFamily="Consolas"/>
@@ -95,6 +97,10 @@
 
                         <Span Text="wait " FontFamily="Consolas"/>
                         <Span Text="&lt;seconds&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
+                        <Span Text="swipeback" FontFamily="Consolas"/>
+                        <Span Text="  (Android emulator / iOS simulator only)" FontAttributes="Italic"/>
                         <Span Text="&#x0a;&#x0a;"/>
 
                         <Span Text="Labels:" FontAttributes="Bold"/>

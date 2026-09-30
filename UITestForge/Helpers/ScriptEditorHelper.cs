@@ -137,11 +137,31 @@ namespace UITestForge.Helpers
                string resultLine;
                if (cmd == "screenshot")
                {
-                  var tmpPath = string.IsNullOrWhiteSpace(rest)
+                  var shotArgs = rest.Trim();
+                  var isNative = false;
+                  var shotParts = shotArgs.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                  if (shotParts.Length > 0 && shotParts[0].ToLowerInvariant() is "native" or "natif")
+                  {
+                     isNative = true;
+                     shotArgs = shotParts.Length > 1 ? shotParts[1].Trim() : string.Empty;
+                  }
+
+                  var tmpPath = string.IsNullOrWhiteSpace(shotArgs)
                      ? Path.ChangeExtension(Path.GetTempFileName(), ".png")
-                     : rest.Trim('"');
-                  cliArgs = $"ui screenshot --output \"{tmpPath}\" --overwrite";
-                  var (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
+                     : shotArgs.Trim('"');
+                  int exitCode;
+                  string stderr;
+                  if (isNative)
+                  {
+                     var (nativeOk, nativeErr) = await DevFlowCliHelper.NativeScreenshotAsync(agent, tmpPath);
+                     exitCode = nativeOk ? 0 : 1;
+                     stderr = nativeErr;
+                  }
+                  else
+                  {
+                     cliArgs = $"ui screenshot --output \"{tmpPath}\" --overwrite";
+                     (exitCode, _, stderr) = await DevFlowCliHelper.RunDevFlowAsync(cliArgs, agent);
+                  }
                   if (exitCode == 0 && File.Exists(tmpPath))
                   {
                      onScreenshotCaptured(tmpPath);
@@ -168,6 +188,11 @@ namespace UITestForge.Helpers
                      await Task.Delay(seconds * 1000);
                      resultLine = $"    ✓ waited {seconds} second{(seconds != 1 ? "s" : "")}";
                   }
+               }
+               else if (cmd == "swipeback")
+               {
+                  var (ok, msg) = await DevFlowCliHelper.SwipeBackAsync(agent);
+                  resultLine = ok ? $"    \u2713 {msg}" : $"    \u2717 {msg}";
                }
                else if (cmd == "exit")
                {
@@ -558,6 +583,8 @@ namespace UITestForge.Helpers
             "screenshot" => string.Empty, // Handled specially in RunScriptAsync
 
             "wait" => string.Empty, // Handled specially in RunScriptAsync
+
+            "swipeback" => string.Empty, // Handled specially in RunScriptAsync
 
             "exit" => string.Empty, // Handled specially in RunScriptAsync
 

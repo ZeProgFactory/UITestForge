@@ -73,6 +73,89 @@ internal static class DevFlowCliHelper
 
       return (process.ExitCode, await stdoutTask, await stderrTask);
    }
+
+   /// <summary>
+   /// Captures a native screenshot. Android emulator only (adb) and iOS simulator only (xcrun simctl).
+   /// </summary>
+   public static async Task<(bool Success, string Error)> NativeScreenshotAsync(DevFlowAgent agent, string outputPath)
+   {
+      if (agent.Platform.Contains("android", StringComparison.OrdinalIgnoreCase))
+      {
+         const string remote = "/sdcard/uitestforge_screenshot.png";
+         var (_, capErr) = await RunAdbAsync($"-s emulator-5554 shell screencap -p {remote}");
+         if (capErr.Trim().Length > 0) return (false, $"adb error: {capErr.Trim()}");
+         await RunAdbAsync($"-s emulator-5554 pull {remote} \"{outputPath}\"");
+         await RunAdbAsync($"-s emulator-5554 shell rm {remote}");
+         return File.Exists(outputPath) ? (true, string.Empty) : (false, "adb error: screenshot could not be pulled from emulator");
+      }
+
+      if (agent.Platform.Contains("ios", StringComparison.OrdinalIgnoreCase))
+      {
+         var psi = new ProcessStartInfo("xcrun", $"simctl io booted screenshot \"{outputPath}\"")
+         {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+         };
+         try
+         {
+            using var proc = Process.Start(psi)
+               ?? throw new InvalidOperationException("Failed to start xcrun.");
+            var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+            var stderrTask = proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+            await stdoutTask;
+            var stderr = await stderrTask;
+            return proc.ExitCode == 0 && File.Exists(outputPath) ? (true, string.Empty) : (false, $"xcrun error: {stderr.Trim()}");
+         }
+         catch (Exception ex)
+         {
+            return (false, $"xcrun error: {ex.Message}");
+         }
+      }
+
+      return (false, "screenshot native is only supported on the Android emulator and iOS simulator");
+   }
+
+   /// <summary>
+   /// Performs a swipe-back gesture.
+   /// </summary>
+   public static async Task<(bool Success, string Message)> SwipeBackAsync(DevFlowAgent agent)
+   {
+      if (agent.Platform.Contains("android", StringComparison.OrdinalIgnoreCase))
+      {
+         var (_, err) = await RunAdbAsync("-s emulator-5554 shell input swipe 10 500 300 500");
+         return err.Trim().Length > 0 ? (false, $"adb error: {err.Trim()}") : (true, "swipeback (Android emulator)");
+      }
+
+      if (agent.Platform.Contains("ios", StringComparison.OrdinalIgnoreCase))
+      {
+         var psi = new ProcessStartInfo("xcrun", "simctl io booted swipe 5 300 300 300")
+         {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+         };
+         try
+         {
+            using var proc = Process.Start(psi)
+               ?? throw new InvalidOperationException("Failed to start xcrun.");
+            var stderrTask = proc.StandardError.ReadToEndAsync();
+            await proc.StandardOutput.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+            var stderr = await stderrTask;
+            return proc.ExitCode == 0 ? (true, "swipeback (iOS simulator)") : (false, $"xcrun error: {stderr.Trim()}");
+         }
+         catch (Exception ex)
+         {
+            return (false, $"xcrun error: {ex.Message}");
+         }
+      }
+
+      return (false, "swipeback is only supported on the Android emulator and iOS simulator");
+   }
 #endif
 
    /// <summary>

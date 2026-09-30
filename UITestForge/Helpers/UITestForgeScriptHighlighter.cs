@@ -14,7 +14,7 @@ public sealed class UITestForgeScriptHighlighter : ISyntaxHighlighter
    /// <summary>All commands understood by <see cref="ScriptEditorHelper"/>.</summary>
    private static readonly HashSet<string> Commands = new(StringComparer.OrdinalIgnoreCase)
    {
-      "tap", "fill", "clear", "focus", "navigate", "scroll", "screenshot", "wait",
+      "screenshot", "wait", "swipeback",
       "create-pptx", "add-report-page", "addsummary", "exit", "goto",
       "checkpage", "checknpage", "isvisible", "isnvisible", "print", "call"
    };
