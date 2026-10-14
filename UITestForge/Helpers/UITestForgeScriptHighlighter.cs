@@ -16,7 +16,8 @@ public sealed class UITestForgeScriptHighlighter : ISyntaxHighlighter
    {
       "screenshot", "wait", "swipeback",
       "create-pptx", "add-report-page", "addsummary", "exit", "goto",
-      "checkpage", "checknpage", "isvisible", "isnvisible", "print", "call"
+      "checkpage", "checknpage", "isvisible", "isnvisible", "print", "call",
+      "set", "unset"
    };
 
    /// <summary>Commands whose first argument is a label / flow target.</summary>
@@ -106,6 +107,17 @@ public sealed class UITestForgeScriptHighlighter : ISyntaxHighlighter
             spans.Add(new StyleSpan(i, length, theme.StringLiteral, theme.Transparent, TextStyle.Normal));
             i += length;
             continue;
+         }
+
+         if (c == '$' && i + 1 < line.Length && line[i + 1] == '{')
+         {
+            int close = line.IndexOf('}', i + 2);
+            if (close > 0)
+            {
+               spans.Add(new StyleSpan(i, close - i + 1, theme.Link, theme.Transparent, TextStyle.Bold));
+               i = close + 1;
+               continue;
+            }
          }
 
          if (c == '#')

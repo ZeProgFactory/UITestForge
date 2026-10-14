@@ -91,6 +91,14 @@
                         <Span Text="  native: uses adb / xcrun (Android emulator / iOS simulator only)" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
+                        <Span Text="set " FontFamily="Consolas"/>
+                        <Span Text="&lt;name&gt; &lt;value&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
+                        <Span Text="unset " FontFamily="Consolas"/>
+                        <Span Text="&lt;name&gt;" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+
                         <Span Text="tap " FontFamily="Consolas"/>
                         <Span Text="&lt;AutomationId&gt;" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
@@ -106,6 +114,25 @@
                         <Span Text="Labels:" FontAttributes="Bold"/>
                         <Span Text="&#x0a;"/>
                         <Span Text="&lt;label&gt;:" FontFamily="Consolas" FontAttributes="Italic"/>
+                        <Span Text="&#x0a;&#x0a;"/>
+
+                        <Span Text="Variables:" FontAttributes="Bold"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="Define with " FontAttributes="Italic"/>
+                        <Span Text="set" FontFamily="Consolas"/>
+                        <Span Text=" and use anywhere with " FontAttributes="Italic"/>
+                        <Span Text="${NAME}" FontFamily="Consolas"/>
+                        <Span Text=". Variables are shared with scripts started via " FontAttributes="Italic"/>
+                        <Span Text="call" FontFamily="Consolas"/>
+                        <Span Text="." FontAttributes="Italic"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="set USER admin" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="set PWD test123" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="fill UserName ${USER}" FontFamily="Consolas"/>
+                        <Span Text="&#x0a;"/>
+                        <Span Text="fill Password ${PWD}" FontFamily="Consolas"/>
                         <Span Text="&#x0a;&#x0a;"/>
 
                         <Span Text="Example:" FontAttributes="Bold"/>

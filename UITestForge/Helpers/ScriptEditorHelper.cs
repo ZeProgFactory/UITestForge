@@ -9,8 +9,9 @@ namespace UITestForge.Helpers
 #if !ANDROID
    /// <summary>
    /// Provides script execution capabilities for the UITestForge script editor.
-   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, addsummary, exit, goto, checkpage, checknpage, isvisible, isnvisible, print, call.
+   /// Supported commands: tap, fill, clear, focus, navigate, scroll, screenshot, wait, create-pptx, add-report-page, addsummary, exit, goto, checkpage, checknpage, isvisible, isnvisible, print, call, set, unset.
    /// Labels can be defined with a colon (e.g., "label:").
+   /// Variables are declared with <c>set NAME value</c> and expanded anywhere with <c>${NAME}</c>.
    /// </summary>
    internal static class ScriptEditorHelper
    {
@@ -49,7 +50,7 @@ namespace UITestForge.Helpers
          Func<Task<string?>>? onGetCurrentPage = null,
          string? scriptFolder = null,
          string? currentPageName = null)
-         => RunScriptAsync(scriptText, agent, onStepStatus, onOutputUpdate, onScreenshotCaptured, onGetCurrentPage, scriptFolder, currentPageName, null);
+         => RunScriptAsync(scriptText, agent, onStepStatus, onOutputUpdate, onScreenshotCaptured, onGetCurrentPage, scriptFolder, currentPageName, null, null);
 
       /// <summary>
       /// Internal overload that threads a shared <see cref="ScriptExecutionSummary"/> through recursive
@@ -64,9 +65,13 @@ namespace UITestForge.Helpers
          Func<Task<string?>>? onGetCurrentPage,
          string? scriptFolder,
          string? currentPageName,
-         ScriptExecutionSummary? summary)
+         ScriptExecutionSummary? summary,
+         Dictionary<string, string>? variables)
       {
          summary ??= new ScriptExecutionSummary();
+
+         // Script variables (set NAME value) - shared with nested `call`ed scripts.
+         variables ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
          var lines = scriptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
          var log = new System.Text.StringBuilder();
@@ -111,6 +116,9 @@ namespace UITestForge.Helpers
                // Skip label definitions (they're just markers)
                if (line.EndsWith(':') && !line.Contains(' ')) continue;
 
+               // Replace ${NAME} placeholders with the current variable values.
+               line = ExpandVariables(line, variables);
+
                stepNum++;
                var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
                var cmd = parts[0].ToLowerInvariant();
@@ -119,6 +127,16 @@ namespace UITestForge.Helpers
 
                onStepStatus(stepNum, cmd);
                log.AppendLine($"[{stepNum}] {line}");
+
+               // Variable declaration / removal is handled before CLI translation.
+               if (cmd is "set" or "unset")
+               {
+                  var setResultLine = HandleVariableCommand(cmd, rest, variables);
+                  TrackResult(cmd, setResultLine);
+                  log.AppendLine(setResultLine);
+                  onOutputUpdate(log.ToString());
+                  continue;
+               }
 
                string cliArgs;
                try
@@ -472,7 +490,8 @@ namespace UITestForge.Helpers
                               onGetCurrentPage,
                               calledScriptFolder,
                               currentPageName,
-                              summary);
+                              summary,
+                              variables);
 
                            stepNum += calledSteps;
 
@@ -529,6 +548,57 @@ namespace UITestForge.Helpers
       /// and extracts a human-readable message. Falls back to the raw text if it is not JSON or
       /// no known message property is found.
       /// </summary>
+      private static readonly System.Text.RegularExpressions.Regex VariableRegex =
+         new(@"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+      /// <summary>
+      /// Replaces every <c>${NAME}</c> placeholder in <paramref name="text"/> with the value of the
+      /// matching script variable. Unknown variables are left untouched so the user can see the
+      /// unresolved placeholder in the output log.
+      /// </summary>
+      private static string ExpandVariables(string text, Dictionary<string, string> variables)
+      {
+         if (string.IsNullOrEmpty(text) || variables.Count == 0 || !text.Contains("${"))
+            return text;
+
+         return VariableRegex.Replace(text, m =>
+            variables.TryGetValue(m.Groups[1].Value, out var value) ? value : m.Value);
+      }
+
+      /// <summary>
+      /// Executes the <c>set &lt;name&gt; &lt;value&gt;</c> / <c>unset &lt;name&gt;</c> commands.
+      /// </summary>
+      private static string HandleVariableCommand(string cmd, string rest, Dictionary<string, string> variables)
+      {
+         var args = rest.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+         if (cmd == "unset")
+         {
+            if (args.Length < 1)
+               return "    \u2717 unset requires a variable name (e.g., unset USER)";
+
+            var removeName = args[0].Trim();
+            return variables.Remove(removeName)
+               ? $"    \u2713 {removeName} removed"
+               : $"    \u2717 variable '{removeName}' is not defined";
+         }
+
+         if (args.Length < 1)
+            return "    \u2717 set requires a variable name (e.g., set USER admin)";
+
+         var name = args[0].Trim();
+         if (!VariableRegex.IsMatch($"${{{name}}}"))
+            return $"    \u2717 '{name}' is not a valid variable name (letters, digits and _ only, not starting with a digit)";
+
+         // Everything after the name is the value; surrounding quotes are optional.
+         var value = args.Length > 1 ? args[1].Trim() : string.Empty;
+         if (value.Length > 1 && value.StartsWith('"') && value.EndsWith('"'))
+            value = value[1..^1];
+
+         variables[name] = value;
+         return $"    \u2713 {name} = {value}";
+      }
+
       private static string ExtractFriendlyDetail(string rawDetail)
       {
          if (string.IsNullOrWhiteSpace(rawDetail)) return rawDetail;
