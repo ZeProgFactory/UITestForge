@@ -22,6 +22,7 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
   - [1. Add DevFlow to your MAUI app](#1-add-devflow-to-your-maui-app)
   - [2. Install the DevFlow CLI](#2-install-the-devflow-cli)
   - [3. Run your app and connect UITestForge](#3-run-your-app-and-connect-uitestforge)
+  - [No app at hand? Use TestDummy](#no-app-at-hand-use-testdummy)
 - [Script Language](#script-language)
   - [`tap <automationId>`](#tap-automationid)
   - [`fill <automationId> <text>`](#fill-automationid-text)
@@ -143,6 +144,14 @@ Reboot your machine after installing the tool for the first time.
 ### 3. Run your app and connect UITestForge
 
 Launch your instrumented MAUI app in debug mode, then open UITestForge and connect to it. From there you can inspect the visual tree, run commands ad-hoc, or execute a script.
+
+### No app at hand? Use TestDummy
+
+[TestDummy](https://github.com/ZeProgFactory/TestDummy) is a ready-to-go .NET MAUI test app with DevFlow already wired up and automation IDs set on its controls. Clone it, run it in Debug, and connect UITestForge to try out the inspector and the sample scripts without touching your own app.
+
+```powershell
+git clone https://github.com/ZeProgFactory/TestDummy
+```
 
 ---
 
