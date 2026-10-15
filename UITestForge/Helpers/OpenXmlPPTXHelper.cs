@@ -21,7 +21,7 @@ namespace UITestForge.Helpers
 
       */
 
-      public static void SetasterBackgroundImage(string pptxPath, string imagePath)
+      public static void SetMasterBackgroundImage(string pptxPath, string imagePath)
       {
          using (var document = PresentationDocument.Open(pptxPath, true))
          {
