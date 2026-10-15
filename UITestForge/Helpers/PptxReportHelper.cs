@@ -11,10 +11,10 @@ namespace UITestForge.Helpers;
 internal static class PptxReportHelper
 {
 #if DEBUG
-   public static bool MasterBackGroundImage { get; private set; } = true;
+   public static bool SetMasterBackGroundImage { get; private set; } = true;
 #else
 
-   public static bool MasterBackGroundImage { get; private set; } = false;
+   public static bool SetMasterBackGroundImage { get; private set; } = false;
 #endif
 
    public static string CurrentPPTXFile = "";
@@ -157,7 +157,7 @@ internal static class PptxReportHelper
       pres.Save(outputPath);
       CurrentPPTXFile = outputPath;
 
-      if (MasterBackGroundImage)
+      if (SetMasterBackGroundImage)
       {
          string? backgroundImagePath = GetBackgroundImagePath();
          OpenXmlPPTXHelper.SetMasterBackgroundImage(outputPath, backgroundImagePath);
@@ -166,7 +166,7 @@ internal static class PptxReportHelper
 
    private static void AddBackgroundImage(IUserSlideShapeCollection shapes, decimal slideWidth, decimal slideHeight)
    {
-      if (MasterBackGroundImage)
+      if (SetMasterBackGroundImage)
       {
          return;
       }
