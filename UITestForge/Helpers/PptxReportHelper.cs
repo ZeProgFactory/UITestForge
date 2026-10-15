@@ -569,5 +569,4 @@ internal static class PptxReportHelper
       }
    }
 
-
 }
