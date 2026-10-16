@@ -32,6 +32,8 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
   - [`navigate <route>`](#navigate-route)
   - [`scroll down|up [px]`](#scroll-downup-px)
   - [`scroll <automationId>`](#scroll-automationid)
+  - [`swipeback`](#swipeback)
+  - [`set <name> <value>` / `unset <name>`](#set-name-value--unset-name)
   - [`call <script-filename>`](#call-script-filename)
   - [`print <text>`](#print-text)
   - [`checkpage <pageName> [label]`](#checkpage-pagename-label)
@@ -41,6 +43,8 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
   - [`goto <label>`](#goto-label)
   - [`wait <seconds>`](#wait-seconds)
   - [`create-pptx [filename] [title]`](#create-pptx-filename-title)
+  - [`add-report-page [title]`](#add-report-page-title)
+  - [`addsummary [title]`](#addsummary-title)
   - [`exit`](#exit)
   - [Labels](#labels)
   - [Comments](#comments)
@@ -63,10 +67,14 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 - **"Run script" context menu command** — right-click (or long-press) in the script editor and choose **Run script** to execute the selected text, or the current line when nothing is selected.
 - **Flow control** — labels, `goto`, and conditional page checks (`checkpage` / `checknpage`) let you branch scripts based on the app's current state.
 - **Script composition** — the `call` command lets you reuse scripts as building blocks for larger flows.
+- **Script variables** — declare values once with `set NAME value`, reuse them anywhere via `${NAME}`, and drop them again with `unset NAME`. Variables are shared with nested `call`ed scripts, so credentials, routes, or file names live in a single place.
 - **Screenshot capture** — grab screenshots at any point during a run for visual verification.
+- **Native screenshots** — `screenshot native` captures the real device frame through `adb` (Android emulator) or `xcrun simctl` (iOS simulator), including native dialogs, pickers, and status bar that the in-app renderer cannot see.
 - **Shell navigation** — jump directly to any registered route.
 - **Scroll support** — scroll the page by a pixel amount or scroll a specific element into view.
+- **Native back gesture** — `swipeback` triggers the platform back navigation on the Android emulator and iOS simulator.
 - **Automatic PowerPoint reporting** — generate a `.pptx` report from a script run with before/after screenshots and the full execution log via `create-pptx`.
+- **Report composition** — append extra slides mid-run with `add-report-page`, and close the deck with an `addsummary` slide listing step counts, pass/fail totals, elapsed time, and every checked page.
 - **Auto-refreshing page checks** — `checkpage` / `checknpage` always re-read the live visual tree before comparing, so checks reflect the app's true current state.
 - **Streaming execution log** — watch each script step run and report success/failure line by line.
 
@@ -263,6 +271,25 @@ Performs a swipe-back gesture from the left screen edge.
 swipeback
 ```
 
+### `set <name> <value>` / `unset <name>`
+Declares a script variable and expands it anywhere later in the script with `${NAME}`.
+- Names may contain letters, digits and `_`, and must not start with a digit. Lookup is case-insensitive.
+- Everything after the name is the value; surrounding double quotes are optional and stripped.
+- Variables are shared with scripts started via `call`, so a value set in the parent is visible in the child.
+- Unknown placeholders are left as-is in the log, which makes typos easy to spot.
+- `unset` removes a variable again.
+```
+set USER admin
+set PWD "s3cr3t!"
+set HOME_ROUTE //main/home
+
+fill UsernameEntry ${USER}
+fill PasswordEntry ${PWD}
+navigate ${HOME_ROUTE}
+
+unset PWD
+```
+
 ### `call <script-filename>`
 Executes another script file, then resumes with the next line of the current script.
 ```
@@ -322,6 +349,21 @@ Generates a PowerPoint report from the run, combining the first and last screens
 ```
 create-pptx
 create-pptx my_test_report.pptx "Counter Button Test"
+```
+
+### `add-report-page [title]`
+Appends an extra slide to the PowerPoint report created by `create-pptx`, using the screenshots and log collected since the previous report page.
+```
+add-report-page
+add-report-page "Checkout Flow"
+```
+
+### `addsummary [title]`
+Appends an execution-summary slide with the total step count, pass/fail totals, elapsed time, and every page verified by `checkpage` / `checknpage`. Counts include steps run inside `call`ed scripts.
+- If `title` is omitted, it defaults to `"Execution Summary"`.
+```
+addsummary
+addsummary "Regression Run - Build 42"
 ```
 
 ### `exit`
