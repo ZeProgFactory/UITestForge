@@ -14,7 +14,7 @@ internal static class PptxReportHelper
    public static bool SetMasterBackGroundImage { get; private set; } = true;
 #else
 
-   public static bool SetMasterBackGroundImage { get; private set; } = false;
+   public static bool SetMasterBackGroundImage { get; private set; } = true;
 #endif
 
    public static string CurrentPPTXFile = "";
