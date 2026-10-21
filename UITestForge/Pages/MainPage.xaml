@@ -31,7 +31,28 @@
       <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
 
          <HorizontalStackLayout Grid.Column="0" VerticalOptions="Center" Margin="20,0,10,0" >
-            <Image Source="uitestforge.png" VerticalOptions="Start"/>
+            <Image x:Name="LogoImage" Source="uitest_forge.png" VerticalOptions="Start">
+               <VisualStateManager.VisualStateGroups>
+                  <VisualStateGroup x:Name="LogoWidthStates">
+                     <VisualState x:Name="Narrow">
+                        <VisualState.StateTriggers>
+                           <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                           <Setter Property="Source" Value="uitest_forge.png" />
+                        </VisualState.Setters>
+                     </VisualState>
+                     <VisualState x:Name="Wide">
+                        <VisualState.StateTriggers>
+                           <AdaptiveTrigger MinWindowWidth="1000" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                           <Setter Property="Source" Value="uitestforge.png" />
+                        </VisualState.Setters>
+                     </VisualState>
+                  </VisualStateGroup>
+               </VisualStateManager.VisualStateGroups>
+            </Image>
          </HorizontalStackLayout>
 
          <!-- Col 1: Agent picker -->
