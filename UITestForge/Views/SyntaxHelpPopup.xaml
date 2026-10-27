@@ -73,6 +73,7 @@
 
                         <Span Text="navigate " FontFamily="Consolas"/>
                         <Span Text="&lt;url&gt;" FontAttributes="Italic"/>
+                        <Span Text=" (e.g. //MainPage09)" FontAttributes="Italic"/>
                         <Span Text="&#x0a;"/>
 
                         <Span Text="print " FontFamily="Consolas"/>

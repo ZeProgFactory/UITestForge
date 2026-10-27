@@ -18,6 +18,7 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 - [Screenshots](#screenshots)
 - [Script editor documentation](#script-editor-documentation)
 - [How it works](#how-it-works)
+- [Install](#install)
 - [Getting Started](#getting-started)
   - [1. Add DevFlow to your MAUI app](#1-add-devflow-to-your-maui-app)
   - [2. Install the DevFlow CLI](#2-install-the-devflow-cli)
@@ -118,6 +119,10 @@ DevFlow</br>
 Running MAUI Application</br>
 <P>
 &nbsp;
+
+## Install
+
+Download the latest release from the [Releases](https://github.com/ZeProgramFactory/UITestForge/releases) page
 
 ## Getting Started
 
@@ -246,9 +251,10 @@ screenshot native native-login.png
 Navigates to a registered Shell route.
 ```
 navigate //home
+navigate //MainPage09
 ```
 
-### `scroll down|up [px]`
+### `scroll down|up
 Scrolls the page vertically by a pixel amount (default `300`).
 ```
 scroll down

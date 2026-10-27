@@ -195,7 +195,7 @@ private async void OnShareClicked(object? sender, EventArgs e)
 | `fill` | `fill <automationId> <text>` | Fill text input |
 | `clear` | `clear <automationId>` | Clear text input |
 | `focus` | `focus <automationId>` | Focus an element |
-| `navigate` | `navigate <route>` | Navigate to route |
+| Navigate to route (e.g. `navigate //MainPage09`) |
 | `scroll` | `scroll <direction\|id>` | Scroll page or element |
 | `screenshot` | `screenshot [path]` | Take screenshot |
 | `wait` | `wait <seconds>` | Wait/delay |
