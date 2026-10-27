@@ -185,6 +185,9 @@
                    Aspect="AspectFit"
                    HorizontalOptions="Fill"
                    VerticalOptions="Fill">
+                     <Image.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnScreenshotTapped" />
+                     </Image.GestureRecognizers>
                      <FlyoutBase.ContextFlyout>
                         <MenuFlyout>
                            <MenuFlyoutItem Text="Copy to Clipboard"
