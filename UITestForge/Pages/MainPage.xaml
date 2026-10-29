@@ -179,7 +179,7 @@
                                   IsExpanded="True"
                                   ExpandedChanged="OnScreenshotExpandedChanged">
 
-               <Grid>
+               <Grid x:Name="ScreenshotHost" SizeChanged="OnScreenshotHostSizeChanged">
                   <Image x:Name="ScreenshotImage"
                    IsVisible="{Binding ScreenshotImageVisible}"
                    Aspect="AspectFit"
@@ -195,6 +195,15 @@
                         </MenuFlyout>
                      </FlyoutBase.ContextFlyout>
                   </Image>
+
+                  <Border x:Name="SelectionHighlight"
+                          IsVisible="False"
+                          InputTransparent="True"
+                          BackgroundColor="Transparent"
+                          Stroke="Red"
+                          StrokeThickness="2"
+                          HorizontalOptions="Start"
+                          VerticalOptions="Start" />
 
                   <!-- Refresh button overlay -->
                   <Button x:Name="ScreenshotRefreshBtn"

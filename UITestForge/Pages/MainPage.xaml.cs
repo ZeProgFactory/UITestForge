@@ -28,6 +28,11 @@ public partial class MainPage : ContentPage
 
       // Wire up ViewModel events
       _viewModel.AgentsCollectionChanged += OnAgentsCollectionChanged;
+      _viewModel.PropertyChanged += (_, args) =>
+      {
+         if (args.PropertyName is nameof(MainViewModel.SelectedTreeNode) or nameof(MainViewModel.ScreenshotImageVisible))
+            MainThread.BeginInvokeOnMainThread(UpdateSelectionHighlight);
+      };
       _viewModel.ScreenshotCaptured += OnScreenshotCaptured;
       _viewModel.AdbForwardButtonEnabledChanged += (enabled) => AdbForwardBtn.IsEnabled = enabled;
 
@@ -309,7 +314,7 @@ public partial class MainPage : ContentPage
    /// no system-bar inset is removed. Increase this value when a control is
    /// only hit by clicking below it, decrease it for the opposite case.
    /// </summary>
-   private double ScreenshotVerticalOffset = 0; // 33;
+   private double ScreenshotVerticalOffset = -20;
 
    /// <summary>
    /// Returns the path from a root node down to the smallest (and, on a tie, the
@@ -456,6 +461,110 @@ public partial class MainPage : ContentPage
    }
 
    // ── Tree expand / collapse / selection ──────────────────────────────────────
+
+   private void OnScreenshotHostSizeChanged(object? sender, EventArgs e) => UpdateSelectionHighlight();
+
+   /// <summary>Absolute rectangle of a node, resolved with the same rules as the screenshot hit test.</summary>
+   private static Rect? ResolveAbsoluteRect(IEnumerable<TreeNode> roots, TreeNode target)
+   {
+      Rect? result = null;
+
+      bool Walk(TreeNode node, double parentX, double parentY, Rect? parentRect)
+      {
+         double originX = parentX;
+         double originY = parentY;
+         Rect? rect = parentRect;
+
+         if (node.Bounds is { } b)
+         {
+            if (parentRect is { } pr)
+            {
+               bool absoluteFits = Fits(pr, b.X, b.Y, b.Width, b.Height);
+               bool relativeFits = Fits(pr, parentX + b.X, parentY + b.Y, b.Width, b.Height);
+               if (absoluteFits || !relativeFits)
+               {
+                  originX = 0;
+                  originY = 0;
+               }
+            }
+            else
+            {
+               originX = 0;
+               originY = 0;
+            }
+
+            rect = new Rect(originX + b.X, originY + b.Y, b.Width, b.Height);
+            if (ReferenceEquals(node, target))
+            {
+               result = rect;
+               return true;
+            }
+         }
+         else if (ReferenceEquals(node, target))
+            return true;
+
+         if (node.Children is null) return false;
+         var ox = node.Bounds is null ? parentX : rect!.Value.X;
+         var oy = node.Bounds is null ? parentY : rect!.Value.Y;
+         foreach (var child in node.Children)
+            if (Walk(child, ox, oy, rect)) return true;
+         return false;
+      }
+
+      static bool Fits(Rect parent, double x, double y, double w, double h)
+      {
+         const double tolerance = 1.0;
+         return x >= parent.Left - tolerance && y >= parent.Top - tolerance
+             && x + w <= parent.Right + tolerance && y + h <= parent.Bottom + tolerance;
+      }
+
+      foreach (var root in roots)
+         if (Walk(root, 0, 0, null)) break;
+
+      return result;
+   }
+
+   private void UpdateSelectionHighlight()
+   {
+      var hide = true;
+      try
+      {
+         if (_viewModel.SelectedTreeNode?.Node is not { } node
+            || (node.WindowBounds ?? node.Bounds) is not { } b
+            || b.Width <= 0 || b.Height <= 0
+            || !_viewModel.ScreenshotImageVisible
+            || _viewModel.TreeItems.Count == 0
+            || ScreenshotHost.Width <= 0 || ScreenshotHost.Height <= 0)
+            return;
+
+         double extW = 0, extH = 0;
+         static void GetExtent(TreeNode n, ref double w, ref double h)
+         {
+            if ((n.WindowBounds ?? n.Bounds) is { } nb)
+            {
+               w = Math.Max(w, nb.X + nb.Width);
+               h = Math.Max(h, nb.Y + nb.Height);
+            }
+            if (n.Children is null) return;
+            foreach (var c in n.Children) GetExtent(c, ref w, ref h);
+         }
+         GetExtent(_viewModel.TreeItems[0].Node, ref extW, ref extH);
+         if (extW <= 0 || extH <= 0) return;
+
+         var scale = Math.Min(ScreenshotHost.Width / extW, ScreenshotHost.Height / extH);
+         var offsetX = (ScreenshotHost.Width - extW * scale) / 2;
+         var offsetY = (ScreenshotHost.Height - extH * scale) / 2;
+
+         SelectionHighlight.WidthRequest = Math.Max(2, b.Width * scale);
+         SelectionHighlight.HeightRequest = Math.Max(2, b.Height * scale);
+         SelectionHighlight.Margin = new Thickness(offsetX + b.X * scale, offsetY + b.Y * scale, 0, 0);
+         hide = false;
+      }
+      finally
+      {
+         SelectionHighlight.IsVisible = !hide;
+      }
+   }
 
    private void OnTreeNodeSelected(object? sender, SelectionChangedEventArgs e)
        => _viewModel.SelectedTreeNode = e.CurrentSelection.FirstOrDefault() as TreeNodeItem;

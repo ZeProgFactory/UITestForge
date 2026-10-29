@@ -72,6 +72,8 @@ UITestForge is a cross-platform <a href="https://learn.microsoft.com/dotnet/maui
 - **Screenshot capture** — grab screenshots at any point during a run for visual verification.
 - **Native screenshots** — `screenshot native` captures the real device frame through `adb` (Android emulator) or `xcrun simctl` (iOS simulator), including native dialogs, pickers, and status bar that the in-app renderer cannot see.
 - **Shell navigation** — jump directly to any registered route.
+- **Click-to-select on screenshot** — click a control on the screenshot to select the matching node in the visual tree (ancestors are expanded automatically).
+- **Selection highlight** — selecting a node in the visual tree draws a red rectangle around the corresponding control on the screenshot.
 - **Scroll support** — scroll the page by a pixel amount or scroll a specific element into view.
 - **Native back gesture** — `swipeback` triggers the platform back navigation on the Android emulator and iOS simulator.
 - **Automatic PowerPoint reporting** — generate a `.pptx` report from a script run with before/after screenshots and the full execution log via `create-pptx`.
