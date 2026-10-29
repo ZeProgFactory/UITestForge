@@ -216,46 +216,18 @@ public partial class MainPage : ContentPage
          return;
       }
 
-      if (e.GetPosition(ScreenshotImage) is not { } tap)
+      if (e.GetPosition(ScreenshotHost) is not { } tap)
          return;
 
-      var (imageWidth, imageHeight) = GetScreenshotPixelSize();
-      if (imageWidth <= 0 || imageHeight <= 0)
-      {
-         _viewModel.ActionStatusText = "Screenshot size unknown";
-         return;
-      }
-
-      double viewWidth = ScreenshotImage.Width;
-      double viewHeight = ScreenshotImage.Height;
-      if (viewWidth <= 0 || viewHeight <= 0)
+      // Inverse of the selection highlight mapping: host = offset + node * scale.
+      if (GetScreenshotMapping() is not var (scale, offsetX, offsetY))
          return;
 
-      // Aspect="AspectFit" letterboxes the image inside the control.
-      double fit = Math.Min(viewWidth / imageWidth, viewHeight / imageHeight);
-      double offsetX = (viewWidth - imageWidth * fit) / 2;
-      double offsetY = (viewHeight - imageHeight * fit) / 2;
-
-      double imageX = (tap.X - offsetX) / fit;
-      double imageY = (tap.Y - offsetY) / fit;
-
-      if (imageX < 0 || imageY < 0 || imageX > imageWidth || imageY > imageHeight)
-         return;
-
-      // Screenshot pixels → node coordinates (device-independent units).
-      // The screenshot covers the window, so the image origin maps to the
-      // window origin — the window offset has to be added back.
-      var rootBounds = _viewModel.TreeItems[0].Node.WindowBounds
-                       ?? _viewModel.TreeItems[0].Node.Bounds;
-      double scaleX = rootBounds is { Width: > 0 } ? imageWidth / rootBounds.Width : 1;
-      double scaleY = rootBounds is { Height: > 0 } ? imageHeight / rootBounds.Height : 1;
-
-      double nodeX = (rootBounds?.X ?? 0) + imageX / scaleX;
-      double nodeY = (rootBounds?.Y ?? 0) + imageY / scaleY + ScreenshotVerticalOffset;
+      double nodeX = (tap.X - offsetX) / scale;
+      double nodeY = (tap.Y - offsetY) / scale;
 
       Debug.WriteLine($"Screenshot hit test: tap=({tap.X:F1}, {tap.Y:F1}) " +
-         $"view={viewWidth:F0}x{viewHeight:F0} image={imageWidth}x{imageHeight} " +
-         $"scale=({scaleX:F3}, {scaleY:F3}) node=({nodeX:F1}, {nodeY:F1})");
+         $"scale={scale:F3} offset=({offsetX:F1}, {offsetY:F1}) node=({nodeX:F1}, {nodeY:F1})");
 
       var path = FindNodePath(_viewModel.TreeItems
          .Where(i => i.Depth == 0)
@@ -326,92 +298,42 @@ public partial class MainPage : ContentPage
       List<TreeNode>? best = null;
       double bestArea = double.MaxValue;
 
-      // offsetX/offsetY translate the node's reported bounds into window
-      // coordinates: some providers report child bounds relative to the parent
-      // instead of absolute, which is detected per node below.
-      void Walk(TreeNode node, List<TreeNode> current, double parentX, double parentY, Rect? parentRect)
+      // Uses the same rectangles as the selection highlight (WindowBounds ?? Bounds).
+      void Walk(TreeNode node, List<TreeNode> current)
       {
          current.Add(node);
 
-         double originX = parentX;
-         double originY = parentY;
-
-         if (node.Bounds is { } b)
+         if ((node.WindowBounds ?? node.Bounds) is { } b
+             && (node.State?.Displayed ?? node.IsVisible)
+             && b.Width > 0 && b.Height > 0
+             && x >= b.X && x <= b.X + b.Width
+             && y >= b.Y && y <= b.Y + b.Height)
          {
-            // Decide whether the bounds are absolute or parent-relative: when
-            // the absolute interpretation falls outside the parent rectangle
-            // but the relative one fits, the values are parent-relative.
-            if (parentRect is { } pr)
-            {
-               bool absoluteFits = Contains(pr, b.X, b.Y, b.Width, b.Height);
-               bool relativeFits = Contains(pr, parentX + b.X, parentY + b.Y, b.Width, b.Height);
-               if (!absoluteFits && relativeFits)
-               {
-                  // keep parent origin as offset
-               }
-               else
-               {
-                  originX = 0;
-                  originY = 0;
-               }
-            }
-            else
-            {
-               originX = 0;
-               originY = 0;
-            }
+            var area = b.Width * b.Height;
 
-            double left = originX + b.X;
-            double top = originY + b.Y;
-
-            if ((node.State?.Displayed ?? node.IsVisible)
-                && b.Width > 0 && b.Height > 0
-                && x >= left && x <= left + b.Width
-                && y >= top && y <= top + b.Height)
+            // The innermost control is the one with the smallest hit area;
+            // when two nodes share the same area (e.g. a layout wrapping a
+            // single child) the deeper one is the more specific match.
+            if (best is null
+                || area < bestArea
+                || (area == bestArea && current.Count > best.Count))
             {
-               var area = b.Width * b.Height;
-
-               // The innermost control is the one with the smallest hit area;
-               // when two nodes share the same area (e.g. a layout wrapping a
-               // single child) the deeper one is the more specific match.
-               if (best is null
-                   || area < bestArea
-                   || (area == bestArea && current.Count > best.Count))
-               {
-                  best = [.. current];
-                  bestArea = area;
-               }
-            }
-
-            if (node.Children is not null)
-            {
-               var rect = new Rect(left, top, b.Width, b.Height);
-               foreach (var child in node.Children)
-                  Walk(child, current, left, top, rect);
+               best = [.. current];
+               bestArea = area;
             }
          }
-         else if (node.Children is not null)
-         {
+
+         if (node.Children is not null)
             foreach (var child in node.Children)
-               Walk(child, current, parentX, parentY, parentRect);
-         }
+               Walk(child, current);
 
          current.RemoveAt(current.Count - 1);
       }
 
       foreach (var root in roots)
-         Walk(root, [], 0, 0, null);
+         Walk(root, []);
 
       return best;
-
-      static bool Contains(Rect parent, double x, double y, double w, double h)
-      {
-         const double tolerance = 1.0;
-         return x >= parent.Left - tolerance
-             && y >= parent.Top - tolerance
-             && x + w <= parent.Right + tolerance
-             && y + h <= parent.Bottom + tolerance;
-      }
    }
 
    /// <summary>Expands the ancestors of the target node and selects it in the tree.</summary>
@@ -524,6 +446,36 @@ public partial class MainPage : ContentPage
       return result;
    }
 
+   /// <summary>
+   /// Mapping between node coordinates (WindowBounds ?? Bounds) and the screenshot host:
+   /// host = offset + node * scale.
+   /// </summary>
+   private (double Scale, double OffsetX, double OffsetY)? GetScreenshotMapping()
+   {
+      if (_viewModel.TreeItems.Count == 0
+         || ScreenshotHost.Width <= 0 || ScreenshotHost.Height <= 0)
+         return null;
+
+      double extW = 0, extH = 0;
+      static void GetExtent(TreeNode n, ref double w, ref double h)
+      {
+         if ((n.WindowBounds ?? n.Bounds) is { } nb)
+         {
+            w = Math.Max(w, nb.X + nb.Width);
+            h = Math.Max(h, nb.Y + nb.Height);
+         }
+         if (n.Children is null) return;
+         foreach (var c in n.Children) GetExtent(c, ref w, ref h);
+      }
+      GetExtent(_viewModel.TreeItems[0].Node, ref extW, ref extH);
+      if (extW <= 0 || extH <= 0) return null;
+
+      var scale = Math.Min(ScreenshotHost.Width / extW, ScreenshotHost.Height / extH);
+      var offsetX = (ScreenshotHost.Width - extW * scale) / 2;
+      var offsetY = (ScreenshotHost.Height - extH * scale) / 2;
+      return (scale, offsetX, offsetY);
+   }
+
    private void UpdateSelectionHighlight()
    {
       var hide = true;
@@ -537,23 +489,7 @@ public partial class MainPage : ContentPage
             || ScreenshotHost.Width <= 0 || ScreenshotHost.Height <= 0)
             return;
 
-         double extW = 0, extH = 0;
-         static void GetExtent(TreeNode n, ref double w, ref double h)
-         {
-            if ((n.WindowBounds ?? n.Bounds) is { } nb)
-            {
-               w = Math.Max(w, nb.X + nb.Width);
-               h = Math.Max(h, nb.Y + nb.Height);
-            }
-            if (n.Children is null) return;
-            foreach (var c in n.Children) GetExtent(c, ref w, ref h);
-         }
-         GetExtent(_viewModel.TreeItems[0].Node, ref extW, ref extH);
-         if (extW <= 0 || extH <= 0) return;
-
-         var scale = Math.Min(ScreenshotHost.Width / extW, ScreenshotHost.Height / extH);
-         var offsetX = (ScreenshotHost.Width - extW * scale) / 2;
-         var offsetY = (ScreenshotHost.Height - extH * scale) / 2;
+         if (GetScreenshotMapping() is not var (scale, offsetX, offsetY)) return;
 
          SelectionHighlight.WidthRequest = Math.Max(2, b.Width * scale);
          SelectionHighlight.HeightRequest = Math.Max(2, b.Height * scale);
