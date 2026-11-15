@@ -3,6 +3,7 @@
     <File Path="README.md" />
     <File Path="x.bat" />
   </Folder>
+  <Project Path="UITestForge.Tests/UITestForge.Tests.csproj" />
   <Project Path="UITestForge/UITestForge.csproj">
     <Deploy Solution="Debug|*" />
   </Project>

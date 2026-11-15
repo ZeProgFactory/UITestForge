@@ -628,58 +628,7 @@ namespace UITestForge.Helpers
       }
 
       internal static string BuildCliArgs(string cmd, string rest)
-         => cmd switch
-         {
-            "tap" => string.IsNullOrWhiteSpace(rest)
-               ? throw new ArgumentException("tap requires an automationId")
-               : $"ui tap --automationId \"{rest.Trim()}\"",
-
-            "fill" => ParseFill(rest),
-
-            "clear" => string.IsNullOrWhiteSpace(rest)
-               ? throw new ArgumentException("clear requires an automationId")
-               : $"ui clear --automationId \"{rest.Trim()}\"",
-
-            "focus" => string.IsNullOrWhiteSpace(rest)
-               ? throw new ArgumentException("focus requires an automationId")
-               : $"ui focus --automationId \"{rest.Trim()}\"",
-
-            "navigate" => string.IsNullOrWhiteSpace(rest)
-               ? throw new ArgumentException("navigate requires a Shell route (e.g. navigate //home)")
-               : $"ui navigate {rest.Trim()}",
-
-            "scroll" => ParseScroll(rest),
-
-            "screenshot" => string.Empty, // Handled specially in RunScriptAsync
-
-            "wait" => string.Empty, // Handled specially in RunScriptAsync
-
-            "swipeback" => string.Empty, // Handled specially in RunScriptAsync
-
-            "exit" => string.Empty, // Handled specially in RunScriptAsync
-
-            "goto" => string.Empty, // Handled specially in RunScriptAsync
-
-            "checkpage" => string.Empty, // Handled specially in RunScriptAsync
-
-            "checknpage" => string.Empty, // Handled specially in RunScriptAsync
-
-            "isvisible" => string.Empty, // Handled specially in RunScriptAsync
-
-            "isnvisible" => string.Empty, // Handled specially in RunScriptAsync
-
-            "print" => string.Empty, // Handled specially in RunScriptAsync
-
-            "create-pptx" => string.Empty, // Handled specially in RunScriptAsync
-
-            "add-report-page" => string.Empty, // Handled specially in RunScriptAsync
-
-            "addsummary" => string.Empty, // Handled specially in RunScriptAsync
-
-            "call" => string.Empty, // Handled specially in RunScriptAsync
-
-            _ => throw new ArgumentException($"Unknown command: {cmd}")
-         };
+         => ScriptCommandTranslator.BuildCliArgs(cmd, rest);
 
       /// <summary>
       /// Recursively searches a visual tree for a node whose automationId matches (case-insensitive).
@@ -699,55 +648,6 @@ namespace UITestForge.Helpers
          }
 
          return null;
-      }
-
-      /// <summary>
-      /// Parses the arguments of a <c>fill</c> script command.
-      /// Expected format: <c>fill &lt;automationId&gt; &lt;text...&gt;</c>
-      /// </summary>
-      private static string ParseFill(string rest)
-      {
-         // maui devflow ui fill --text --automationId PhoneNumberEntry abc
-
-         var idx = rest.IndexOf(' ');
-         if (idx < 0)
-            throw new ArgumentException("fill requires an automationId and text (e.g. fill MyEntry Hello)");
-         var id = rest[..idx].Trim();
-         var text = rest[(idx + 1)..].Trim();
-
-         return $"ui fill --text --automationId {id} \"{text}\"".Replace("\"\"", "\"");
-      }
-
-      /// <summary>
-      /// Parses the arguments of a <c>scroll</c> script command.
-      /// Supported formats:
-      /// <list type="bullet">
-      ///   <item><c>scroll &lt;automationId&gt;</c> — scrolls the element into view</item>
-      ///   <item><c>scroll up [dy]</c> — scrolls up by <paramref name="dy"/> pixels (default 300)</item>
-      ///   <item><c>scroll down [dy]</c> — scrolls down by <paramref name="dy"/> pixels (default 300)</item>
-      /// </list>
-      /// </summary>
-      private static string ParseScroll(string rest)
-      {
-         if (string.IsNullOrWhiteSpace(rest))
-            throw new ArgumentException(
-               "scroll requires a direction or automationId (e.g. scroll down, scroll up 500, scroll MyList)");
-
-         var parts = rest.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-         var first = parts[0].ToLowerInvariant();
-
-         if (first is "up" or "down")
-         {
-            int delta = 300;
-            if (parts.Length > 1 && int.TryParse(parts[1], out var parsed))
-               delta = parsed;
-            // Positive dy = up, negative dy = down (per CLI help)
-            var dy = first == "up" ? delta : -delta;
-            return $"ui scroll --dy {dy}";
-         }
-
-         // Treat as automationId — scroll element into view
-         return $"ui scroll --element \"{parts[0].Trim()}\"";
       }
 
       /// <summary>

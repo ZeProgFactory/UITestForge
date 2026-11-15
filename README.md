@@ -482,6 +482,10 @@ ui scroll --element "SubmitBtn"
 
 Issues and pull requests are welcome! This project is under active development, so expect breaking changes to the script syntax and CLI as it matures.
 
+### Running unit tests
+
+Run `dotnet test UITestForge.slnx` from the repository root, or run the `UITestForge.Tests` project from Visual Studio Test Explorer. The MSTest suite covers script command translation and highlighting, plus visual-tree model and item behavior.
+
 ## License
 
 See [LICENSE](LICENSE) for details.

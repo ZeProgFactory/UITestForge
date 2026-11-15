@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <WindowsAppSdkDeploymentManagerInitialize>false</WindowsAppSdkDeploymentManagerInitialize>
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
+    <WindowsAppSdkAutoInitialize>false</WindowsAppSdkAutoInitialize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.10" />
+    <PackageReference Include="MSTest" Version="4.2.3" />
+    <PackageReference Include="ScriptPad" Version="10.0.0.22" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UITestForge\UITestForge.csproj" ReferenceOutputAssembly="false" />
+    <Compile Include="..\UITestForge\Helpers\ScriptCommandTranslator.cs" Link="Helpers\ScriptCommandTranslator.cs" />
+    <Compile Include="..\UITestForge\Helpers\UITestForgeScriptHighlighter.cs" Link="Helpers\UITestForgeScriptHighlighter.cs" />
+    <Compile Include="..\UITestForge\Models\TreeJSONmodels.cs" Link="Models\TreeJSONmodels.cs" />
+    <Compile Include="..\UITestForge\Models\TreeNodeItem.cs" Link="Models\TreeNodeItem.cs" />
+  </ItemGroup>
+
+</Project>
