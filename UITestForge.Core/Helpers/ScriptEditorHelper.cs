@@ -695,7 +695,7 @@ namespace UITestForge.Helpers
             }
             else
             {
-               outputPath = Path.Combine(FileSystem.AppDataDirectory, filename);
+               outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "UITestForge", filename);
             }
 
             // Extract base version (e.g., "0.1.0" from "0.1.0-preview.12.26368.2+...")

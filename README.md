@@ -168,6 +168,19 @@ Launch your instrumented MAUI app in debug mode, then open UITestForge and conne
 git clone https://github.com/ZeProgFactory/TestDummy
 ```
 
+### Command line: UITF
+
+`UITF` is a console runner for unattended runs (CI, scheduled tests). It takes a script name, connects to the **first** DevFlow agent reported by the broker, executes the script without any user interaction and writes the test log to the console.
+
+```powershell
+dotnet run --project UITF -- my_script.df
+UITF C:\tests\login_check          # .df, .devflow and .txt are tried when no extension is given
+```
+
+Exit codes: `0` success, `1` a step failed (a `✗` line in the log) or the script threw, `2` usage error, script not found, broker unreachable or no agent connected.
+
+Relative `create-pptx` filenames are saved next to the script. The run logic lives in `UITestForge.Core` (`ScriptRunnerCli`, `ScriptEditorHelper`, `DevFlowCliHelper`, `DevFlowBrokerClient`, PPTX helpers) and is shared with the UITestForge app; unit tests are in `UITestForge.Tests/ScriptRunnerCliTests.cs`.
+
 ---
 
 ## Script Language

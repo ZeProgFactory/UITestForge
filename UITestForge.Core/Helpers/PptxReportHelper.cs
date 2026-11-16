@@ -93,7 +93,7 @@ internal static class PptxReportHelper
       titleShape.TextBox.SetText(title);
       titleShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
       titleShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-      titleShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex()); // Black text
+      titleShape.TextBox.Paragraphs.First().SetFontColor("#000080"); // Black text
       titleShape.TextBox.Paragraphs.First().SetFontSize(32);
       textY += lineHeight + lineSpacing;
 
@@ -107,7 +107,7 @@ internal static class PptxReportHelper
          appNameShape.TextBox.SetText($"{appName}");
          appNameShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
          appNameShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-         appNameShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex()); // Black text
+         appNameShape.TextBox.Paragraphs.First().SetFontColor("#000080"); // Black text
          appNameShape.TextBox.Paragraphs.First().SetFontSize(48);
          appNameShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true; // Bold text
          textY += lineHeight + lineSpacing;
@@ -123,7 +123,7 @@ internal static class PptxReportHelper
          platformShape.TextBox.SetText($"{platform}");
          platformShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
          platformShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-         platformShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex()); // Black text
+         platformShape.TextBox.Paragraphs.First().SetFontColor("#000080"); // Black text
          platformShape.TextBox.Paragraphs.First().SetFontSize(32);
          textY += lineHeight + lineSpacing;
       }
@@ -138,7 +138,7 @@ internal static class PptxReportHelper
          versionShape.TextBox.SetText($"V {version}");
          versionShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
          versionShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-         versionShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex()); // Black text
+         versionShape.TextBox.Paragraphs.First().SetFontColor("#000080"); // Black text
          versionShape.TextBox.Paragraphs.First().SetFontSize(28);
          textY += lineHeight + lineSpacing;
       }
@@ -151,7 +151,7 @@ internal static class PptxReportHelper
       timestampShape.TextBox.SetText(DateTime.Now.ToString("dd.MM.yyyy  HH:mm:ss"));
       timestampShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
       timestampShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-      timestampShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex());
+      timestampShape.TextBox.Paragraphs.First().SetFontColor("#000080");
       timestampShape.TextBox.Paragraphs.First().SetFontSize(20);
 
       pres.Save(outputPath);
@@ -413,7 +413,7 @@ internal static class PptxReportHelper
       headerShape.TextBox.SetText(headerText);
       headerShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
       headerShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-      headerShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex());
+      headerShape.TextBox.Paragraphs.First().SetFontColor("#000080");
       headerShape.TextBox.Paragraphs.First().SetFontSize(18);
       headerShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
 
@@ -554,7 +554,7 @@ internal static class PptxReportHelper
       headerShape.TextBox.SetText(headerText);
       headerShape.TextBox.VerticalAlignment = TextVerticalAlignment.Middle;
       headerShape.TextBox.Paragraphs.First().HorizontalAlignment = TextHorizontalAlignment.Center;
-      headerShape.TextBox.Paragraphs.First().SetFontColor(Colors.Navy.ToHex());
+      headerShape.TextBox.Paragraphs.First().SetFontColor("#000080");
       headerShape.TextBox.Paragraphs.First().SetFontSize(18);
       headerShape.TextBox.Paragraphs.First().Portions.First().Font.IsBold = true;
 
@@ -597,3 +597,4 @@ internal static class PptxReportHelper
    }
 
 }
+

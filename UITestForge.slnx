@@ -8,5 +8,6 @@
   <Project Path="UITestForge/UITestForge.csproj">
     <Deploy Solution="Debug|*" />
   </Project>
+  <Project Path="UITF/UITF.csproj" />
 </Solution>
 
