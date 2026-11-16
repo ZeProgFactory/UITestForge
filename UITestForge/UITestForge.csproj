@@ -50,6 +50,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\UITestForge.Core\UITestForge.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<!-- App Icon -->
 
 		<!-- Splash Screen -->

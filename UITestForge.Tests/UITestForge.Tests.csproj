@@ -20,11 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UITestForge\UITestForge.csproj" ReferenceOutputAssembly="false" />
-    <Compile Include="..\UITestForge\Helpers\ScriptCommandTranslator.cs" Link="Helpers\ScriptCommandTranslator.cs" />
+    <ProjectReference Include="..\UITestForge.Core\UITestForge.Core.csproj" />
     <Compile Include="..\UITestForge\Helpers\UITestForgeScriptHighlighter.cs" Link="Helpers\UITestForgeScriptHighlighter.cs" />
-    <Compile Include="..\UITestForge\Models\TreeJSONmodels.cs" Link="Models\TreeJSONmodels.cs" />
-    <Compile Include="..\UITestForge\Models\TreeNodeItem.cs" Link="Models\TreeNodeItem.cs" />
   </ItemGroup>
 
 </Project>

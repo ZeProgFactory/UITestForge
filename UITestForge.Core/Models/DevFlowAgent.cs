@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
@@ -53,4 +53,5 @@ public class DevFlowAgent : INotifyPropertyChanged
 [JsonSerializable(typeof(List<ElementInfo>))]
 [JsonSerializable(typeof(TapRequest))]
 [JsonSerializable(typeof(ActionResponse))]
-internal partial class DevFlowJsonContext : JsonSerializerContext { }
+public partial class DevFlowJsonContext : JsonSerializerContext { }
+

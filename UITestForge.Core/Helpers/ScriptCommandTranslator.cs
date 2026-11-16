@@ -1,8 +1,8 @@
-﻿namespace UITestForge.Helpers;
+namespace UITestForge.Helpers;
 
-internal static class ScriptCommandTranslator
+public static class ScriptCommandTranslator
 {
-    internal static string BuildCliArgs(string cmd, string rest)
+    public static string BuildCliArgs(string cmd, string rest)
         => cmd switch
         {
             "tap" => string.IsNullOrWhiteSpace(rest)
@@ -64,3 +64,4 @@ internal static class ScriptCommandTranslator
         return $"ui scroll --element \"{parts[0].Trim()}\"";
     }
 }
+

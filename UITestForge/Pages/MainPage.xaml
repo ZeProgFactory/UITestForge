@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage 
    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -10,6 +10,7 @@
 
    <ContentPage.Resources>
       <ResourceDictionary>
+         <ctrl:IndentToPaddingConverter x:Key="IndentToPadding"/>
          <Style x:Key="ToolBarButton" TargetType="Button">
             <Setter Property="TextColor" Value="Black"/>
             <Setter Property="BackgroundColor" Value="Transparent"/>
@@ -263,7 +264,7 @@
                         <DataTemplate>
                            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
                               ColumnSpacing="3"
-                              Padding="{Binding IndentPadding}"
+                              Padding="{Binding IndentLeft, Converter={StaticResource IndentToPadding}}"
                               HeightRequest="26">
                               <Grid.GestureRecognizers>
                                  <TapGestureRecognizer NumberOfTapsRequired="2"
